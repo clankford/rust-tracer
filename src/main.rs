@@ -34,3 +34,26 @@ struct Tuple {
     // When w = 1 the tuple is a point, when w = 0 the tuple is a vector.
     w: u8
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_vector() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(
+            0, v.w,
+            "The 'w' field of a vector should be 0, value was {}", v.w
+        );
+    }
+
+    #[test]
+    fn is_point() {
+        let p = point(1.0, 2.0, 3.0);
+        assert_eq!(
+            1, p.w,
+            "The 'w' field of a point should be 1, value was {}", p.w
+        );
+    }
+}
