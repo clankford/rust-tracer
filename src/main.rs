@@ -1,12 +1,14 @@
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
-    println!("Point: {}, {}, {}, {}", a.x, a.y, a.z, a.w);
+    println!("Point: {:#?},", a);
     let b = Tuple::vector(4.0, -4.0, 3.0);
-    println!("Vector: {}, {}, {}, {}", b.x, b.y, b.z, b.w);
+    println!("Vector: {:#?}", b);
     println!("{}", a.equal(&b));
     println!("{}", f_equal(a.x, b.x));
     let c = a.add(&b);
-    println!("{}, {}, {}, {}", c.x, c.y, c.z, c.w);
+    println!("{:#?}", c);
+    let d = a.subtract(&b);
+    println!("{:#?}", d);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -72,6 +74,17 @@ impl Tuple {
             w: a.w + self.w
         }
     }
+
+    // TODO: Return a Result so that an error can be returned if a point is attempted
+    // to be subtracted from a vector. Resulting in a negative value for w.
+    fn subtract(&self, a: &Tuple) -> Tuple {
+        Tuple {
+            x: self.x - a.x, 
+            y: self.y - a.y, 
+            z: self.z - a.z, 
+            w: self.w - a.w
+        }
+    }
 }
 
 #[cfg(test)]
@@ -79,7 +92,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_vector() {
+    fn tuple_is_a_vector() {
         let v = Tuple::vector(1.0, 2.0, 3.0);
         assert_eq!(
             0, v.w,
@@ -88,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn is_point() {
+    fn tuple_is_a_point() {
         let p = Tuple::point(1.0, 2.0, 3.0);
         assert_eq!(
             1, p.w,
@@ -138,6 +151,45 @@ mod tests {
         assert_eq!(
             true, x,
             "The sum of the point and vector should equal (1, 1, 6, 1), value was {:#?}", y
+        )
+    }
+
+    #[test]
+    fn subtract_two_points() {
+        let p1 = Tuple::point(3.0, 2.0, 1.0);
+        let p2 = Tuple::point(5.0, 6.0, 7.0);
+        let y: Tuple = p1.subtract(&p2);
+        let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
+        let x: bool = expected.equal(&y);
+        assert_eq!(
+            true, x,
+            "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn subtract_vector_from_point() {
+        let p = Tuple::point(3.0, 2.0, 1.0);
+        let v = Tuple::vector(5.0, 6.0, 7.0);
+        let y: Tuple = p.subtract(&v);
+        let expected: Tuple = Tuple::point(-2.0, -4.0, -6.0);
+        let x: bool = expected.equal(&y);
+        assert_eq!(
+            true, x,
+            "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn subtract_two_vectors() {
+        let v1 = Tuple::point(3.0, 2.0, 1.0);
+        let v2 = Tuple::point(5.0, 6.0, 7.0);
+        let y: Tuple = v1.subtract(&v2);
+        let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
+        let x: bool = expected.equal(&y);
+        assert_eq!(
+            true, x,
+            "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
         )
     }
 }
