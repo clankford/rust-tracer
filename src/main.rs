@@ -1,45 +1,12 @@
 fn main() {
-    let a = point(4.3, -4.2, 3.1);
+    let a = Tuple::point(4.3, -4.2, 3.1);
     println!("Point: {}, {}, {}, {}", a.x, a.y, a.z, a.w);
-    let b = vector(4.0, -4.0, 3.0);
+    let b = Tuple::vector(4.0, -4.0, 3.0);
     println!("Vector: {}, {}, {}, {}", b.x, b.y, b.z, b.w);
-    println!("{}", equal(&a, &b));
+    println!("{}", a.equal(&b));
     println!("{}", f_equal(a.x, b.x));
-    let c = add(&a, &b);
+    let c = a.add(&b);
     println!("{}, {}, {}, {}", c.x, c.y, c.z, c.w);
-}
-
-// Using field init shorthand because the function parameter names are the same
-// as the struct's field names.
-fn point(x: f32, y: f32, z: f32) -> Tuple {
-    Tuple {
-        x,
-        y,
-        z,
-        w: 1
-    }
-}
-
-// Using field init shorthand because the function parameter names are the same
-// as the struct's field names.
-fn vector(x: f32, y: f32, z: f32) -> Tuple {
-    Tuple {
-        x,
-        y,
-        z,
-        w: 0
-    }
-}
-
-// Takes a reference to a Tuple object since it is not operating on the values
-// passed to it. This allows the Tuple objects to stay in scope for other operations.
-fn equal(a: &Tuple, b: &Tuple) -> bool {
-    if f_equal(a.x, b.x) & f_equal(a.y, b.y) &
-        f_equal(a.z, b.z) & (a.w == b.w) {
-            true
-        } else {
-            false
-        }
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -52,17 +19,6 @@ fn f_equal(a: f32, b: f32) -> bool {
     }
 }
 
-// TODO: Return a Result so that an error can be returned if two points are 
-// attempted to be added together.
-fn add(a: &Tuple, b: &Tuple) -> Tuple {
-    Tuple {
-        x: a.x + b.x, 
-        y: a.y + b.y, 
-        z: a.z + b.z, 
-        w: a.w + b.w
-    }
-}
-
 #[derive(Debug)]
 struct Tuple {
     x: f32,
@@ -72,13 +28,59 @@ struct Tuple {
     w: u8
 }
 
+impl Tuple {
+    // Using field init shorthand because the function parameter names are the same
+    // as the struct's field names.
+    fn point(x: f32, y: f32, z: f32) -> Tuple {
+        Tuple {
+            x,
+            y,
+            z,
+            w: 1
+        }
+    }
+
+    // Using field init shorthand because the function parameter names are the same
+    // as the struct's field names.
+    fn vector(x: f32, y: f32, z: f32) -> Tuple {
+        Tuple {
+            x,
+            y,
+            z,
+            w: 0
+        }
+    }
+
+    // Takes a reference to a Tuple object since it is not operating on the values
+    // passed to it. This allows the Tuple objects to stay in scope for other operations.
+    fn equal(&self, a: &Tuple) -> bool {
+        if f_equal(a.x, self.x) & f_equal(a.y, self.y) &
+            f_equal(a.z, self.z) & (a.w == self.w) {
+                true
+            } else {
+                false
+            }
+    }
+
+    // TODO: Return a Result so that an error can be returned if two points are 
+    // attempted to be added together.
+    fn add(&self, a: &Tuple) -> Tuple {
+        Tuple {
+            x: a.x + self.x, 
+            y: a.y + self.y, 
+            z: a.z + self.z, 
+            w: a.w + self.w
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn is_vector() {
-        let v = vector(1.0, 2.0, 3.0);
+        let v = Tuple::vector(1.0, 2.0, 3.0);
         assert_eq!(
             0, v.w,
             "The 'w' field of a vector should be 0, value was {}", v.w
@@ -87,7 +89,7 @@ mod tests {
 
     #[test]
     fn is_point() {
-        let p = point(1.0, 2.0, 3.0);
+        let p = Tuple::point(1.0, 2.0, 3.0);
         assert_eq!(
             1, p.w,
             "The 'w' field of a point should be 1, value was {}", p.w
@@ -118,9 +120,9 @@ mod tests {
 
     #[test]
     fn vectors_are_equal() {
-        let a = vector(1.000001, 2.0, 3.0);
-        let b = vector(1.0, 2.0, 3.0);
-        let x: bool = equal(&a, &b);
+        let a = Tuple::vector(1.000001, 2.0, 3.0);
+        let b = Tuple::vector(1.0, 2.0, 3.0);
+        let x: bool = a.equal(&b);
         assert_eq!(
             true, x,
             "The vectors a and b should be equal = true, value was {}", x
@@ -129,10 +131,10 @@ mod tests {
 
     #[test]
     fn add_vector_and_point() {
-        let p = point(3.0, -2.0, 5.0);
-        let v = vector(-2.0, 3.0, 1.0);
-        let y: Tuple = add(&p, &v);
-        let x: bool = equal(&point(1.0, 1.0, 6.0), &y);
+        let p = Tuple::point(3.0, -2.0, 5.0);
+        let v = Tuple::vector(-2.0, 3.0, 1.0);
+        let y: Tuple = p.add(&v);
+        let x: bool = (&Tuple::point(1.0, 1.0, 6.0)).equal(&y);
         assert_eq!(
             true, x,
             "The sum of the point and vector should equal (1, 1, 6, 1), value was {:#?}", y
