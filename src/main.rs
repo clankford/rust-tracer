@@ -3,6 +3,8 @@ fn main() {
     println!("Point: {}, {}, {}, {}", a.x, a.y, a.z, a.w);
     let b = vector(4.0, -4.0, 3.0);
     println!("Vector: {}, {}, {}, {}", b.x, b.y, b.z, b.w);
+    println!("{}", equal(&a, &b));
+    println!("{}", f_equal(a.x, b.x));
 }
 
 // Using field init shorthand because the function parameter names are the same
@@ -27,7 +29,16 @@ fn vector(x: f32, y: f32, z: f32) -> Tuple {
     }
 }
 
-fn equal(a: f32, b: f32) -> bool {
+fn equal(a: &Tuple, b: &Tuple) -> bool {
+    if f_equal(a.x, b.x) & f_equal(a.y, b.y) &
+        f_equal(a.z, b.z) & (a.w == b.w) {
+            true
+        } else {
+            false
+        }
+}
+
+fn f_equal(a: f32, b: f32) -> bool {
     const EPSILON: f32 = 0.00001;
     let diff: f32 = a - b;
     if diff.abs() < EPSILON {
@@ -71,9 +82,10 @@ mod tests {
     fn values_are_equal() {
         let a: f32 = 1.222225;
         let b: f32 = 1.222226;
+        let x: bool = f_equal(a, b);
         assert_eq!(
-            true, equal(a, b),
-            "The values {} and {} should be equal = true, value was {}", a, b, equal(a,b)
+            true, x,
+            "The values {} and {} should be equal = true, value was {}", a, b, x
         )
     }
 
@@ -81,9 +93,21 @@ mod tests {
     fn values_are_not_equal() {
         let a: f32 = 0.00001;
         let b: f32 = 0.000021;
+        let x: bool = f_equal(a, b);
         assert_eq!(
-            true, !equal(a, b),
-            "The values {} and {} should be equal = false, value was {}", a, b, equal(a,b)
+            false, x,
+            "The values {} and {} should be equal = false, value was {}", a, b, x
+        )
+    }
+
+    #[test]
+    fn vectors_are_equal() {
+        let a = vector(1.000001, 2.0, 3.0);
+        let b = vector(1.0, 2.0, 3.0);
+        let x: bool = equal(&a, &b);
+        assert_eq!(
+            true, x,
+            "The vectors a and b should be equal = true, value was {}", x
         )
     }
 }
