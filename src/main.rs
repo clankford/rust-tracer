@@ -1,12 +1,13 @@
 use std::ops::Add;
 use std::ops::Sub;
+use std::cmp::Eq;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
     println!("Point: {:#?},", a);
     let b = Tuple::vector(4.0, -4.0, 3.0);
     println!("Vector: {:#?}", b);
-    println!("{}", a.equal(&b));
+    println!("{}", a == b);
     println!("{}", f_equal(a.x, b.x));
     // The overloaded + operator for the Tuple type requires references to avoid copying the Tuple.
     let c = &a + &b;
@@ -56,17 +57,6 @@ impl Tuple {
             w: 0
         }
     }
-
-    // Takes a reference to a Tuple object since it is not operating on the values
-    // passed to it. This allows the Tuple objects to stay in scope for other operations.
-    fn equal(&self, a: &Tuple) -> bool {
-        if f_equal(a.x, self.x) & f_equal(a.y, self.y) &
-            f_equal(a.z, self.z) & (a.w == self.w) {
-                true
-            } else {
-                false
-            }
-    }
 }
 
 // To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
@@ -102,6 +92,20 @@ impl Sub for &Tuple {
         }
     }
 }
+
+// Must overload PartialEq instead of leveraging Derive PartialEq on the Tuple struct. This is
+// because we have a custom implementation for comparing floating point numbers f_equal.
+impl PartialEq for Tuple {
+    fn eq(&self, other: &Tuple) -> bool {
+        if f_equal(self.x, other.x) & f_equal(self.y, other.y) &
+            f_equal(self.z, other.z) & (self.w == other.w) {
+                true
+            } else {
+                false
+            }
+    }
+}
+impl Eq for Tuple {}
 
 #[cfg(test)]
 mod tests {
@@ -151,7 +155,7 @@ mod tests {
     fn vectors_are_equal() {
         let a = Tuple::vector(1.000001, 2.0, 3.0);
         let b = Tuple::vector(1.0, 2.0, 3.0);
-        let x: bool = a.equal(&b);
+        let x: bool = a == b;
         assert_eq!(
             true, x,
             "The vectors a and b should be equal = true, value was {}", x
@@ -163,7 +167,7 @@ mod tests {
         let p = Tuple::point(3.0, -2.0, 5.0);
         let v = Tuple::vector(-2.0, 3.0, 1.0);
         let y: Tuple = &p + &v;
-        let x: bool = (&Tuple::point(1.0, 1.0, 6.0)).equal(&y);
+        let x: bool = Tuple::point(1.0, 1.0, 6.0) == y;
         assert_eq!(
             true, x,
             "The sum of the point and vector should equal (1, 1, 6, 1), value was {:#?}", y
@@ -176,7 +180,7 @@ mod tests {
         let p2 = Tuple::point(5.0, 6.0, 7.0);
         let y: Tuple = &p1 - &p2;
         let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
-        let x: bool = expected.equal(&y);
+        let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
@@ -189,7 +193,7 @@ mod tests {
         let v = Tuple::vector(5.0, 6.0, 7.0);
         let y: Tuple = &p - &v;
         let expected: Tuple = Tuple::point(-2.0, -4.0, -6.0);
-        let x: bool = expected.equal(&y);
+        let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
@@ -202,7 +206,7 @@ mod tests {
         let v2 = Tuple::point(5.0, 6.0, 7.0);
         let y: Tuple = &v1 - &v2;
         let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
-        let x: bool = expected.equal(&y);
+        let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
