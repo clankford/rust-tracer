@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
     println!("Point: {:#?},", a);
@@ -5,7 +7,8 @@ fn main() {
     println!("Vector: {:#?}", b);
     println!("{}", a.equal(&b));
     println!("{}", f_equal(a.x, b.x));
-    let c = a.add(&b);
+    // The overloaded + operator for the Tuple type requires references to avoid copying the Tuple.
+    let c = &a + &b;
     println!("{:#?}", c);
     let d = a.subtract(&b);
     println!("{:#?}", d);
@@ -64,17 +67,6 @@ impl Tuple {
             }
     }
 
-    // TODO: Return a Result so that an error can be returned if two points are 
-    // attempted to be added together.
-    fn add(&self, a: &Tuple) -> Tuple {
-        Tuple {
-            x: a.x + self.x, 
-            y: a.y + self.y, 
-            z: a.z + self.z, 
-            w: a.w + self.w
-        }
-    }
-
     // TODO: Return a Result so that an error can be returned if a point is attempted
     // to be subtracted from a vector. Resulting in a negative value for w.
     fn subtract(&self, a: &Tuple) -> Tuple {
@@ -83,6 +75,23 @@ impl Tuple {
             y: self.y - a.y, 
             z: self.z - a.z, 
             w: self.w - a.w
+        }
+    }
+}
+
+// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// the Add trait on the &Tuple (reference) type. 
+impl Add for &Tuple {
+    type Output = Tuple;
+
+    // TODO: Return a Result so that an error can be returned if two points are 
+    // attempted to be added together. Or Panic.
+    fn add(self, other: &Tuple) -> Tuple {
+        Tuple {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+            w: self.w + other.w
         }
     }
 }
@@ -146,7 +155,7 @@ mod tests {
     fn add_vector_and_point() {
         let p = Tuple::point(3.0, -2.0, 5.0);
         let v = Tuple::vector(-2.0, 3.0, 1.0);
-        let y: Tuple = p.add(&v);
+        let y: Tuple = &p + &v;
         let x: bool = (&Tuple::point(1.0, 1.0, 6.0)).equal(&y);
         assert_eq!(
             true, x,
