@@ -1,4 +1,5 @@
 use std::ops::Add;
+use std::ops::Sub;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
@@ -10,7 +11,7 @@ fn main() {
     // The overloaded + operator for the Tuple type requires references to avoid copying the Tuple.
     let c = &a + &b;
     println!("{:#?}", c);
-    let d = a.subtract(&b);
+    let d = &a - &b;
     println!("{:#?}", d);
 }
 
@@ -66,17 +67,6 @@ impl Tuple {
                 false
             }
     }
-
-    // TODO: Return a Result so that an error can be returned if a point is attempted
-    // to be subtracted from a vector. Resulting in a negative value for w.
-    fn subtract(&self, a: &Tuple) -> Tuple {
-        Tuple {
-            x: self.x - a.x, 
-            y: self.y - a.y, 
-            z: self.z - a.z, 
-            w: self.w - a.w
-        }
-    }
 }
 
 // To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
@@ -92,6 +82,23 @@ impl Add for &Tuple {
             y: self.y + other.y,
             z: self.z + other.z,
             w: self.w + other.w
+        }
+    }
+}
+
+// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// the Add trait on the &Tuple (reference) type. 
+impl Sub for &Tuple {
+    type Output = Tuple;
+
+    // TODO: Return a Result so that an error can be returned if two points are 
+    // attempted to be added together. Or Panic.
+    fn sub(self, other: &Tuple) -> Tuple {
+        Tuple {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+            w: self.w - other.w
         }
     }
 }
@@ -167,7 +174,7 @@ mod tests {
     fn subtract_two_points() {
         let p1 = Tuple::point(3.0, 2.0, 1.0);
         let p2 = Tuple::point(5.0, 6.0, 7.0);
-        let y: Tuple = p1.subtract(&p2);
+        let y: Tuple = &p1 - &p2;
         let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
         let x: bool = expected.equal(&y);
         assert_eq!(
@@ -180,7 +187,7 @@ mod tests {
     fn subtract_vector_from_point() {
         let p = Tuple::point(3.0, 2.0, 1.0);
         let v = Tuple::vector(5.0, 6.0, 7.0);
-        let y: Tuple = p.subtract(&v);
+        let y: Tuple = &p - &v;
         let expected: Tuple = Tuple::point(-2.0, -4.0, -6.0);
         let x: bool = expected.equal(&y);
         assert_eq!(
@@ -193,7 +200,7 @@ mod tests {
     fn subtract_two_vectors() {
         let v1 = Tuple::point(3.0, 2.0, 1.0);
         let v2 = Tuple::point(5.0, 6.0, 7.0);
-        let y: Tuple = v1.subtract(&v2);
+        let y: Tuple = &v1 - &v2;
         let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
         let x: bool = expected.equal(&y);
         assert_eq!(
