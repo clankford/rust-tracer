@@ -1,6 +1,7 @@
 use std::ops::Add;
 use std::ops::Sub;
 use std::cmp::Eq;
+use std::ops::Neg;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
@@ -14,6 +15,8 @@ fn main() {
     println!("{:#?}", c);
     let d = &a - &b;
     println!("{:#?}", d);
+    println!("Negate a Tuple.");
+    println!("{:#?}", -&d);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -77,7 +80,7 @@ impl Add for &Tuple {
 }
 
 // To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
-// the Add trait on the &Tuple (reference) type. 
+// the Sub trait on the &Tuple (reference) type. 
 impl Sub for &Tuple {
     type Output = Tuple;
 
@@ -106,6 +109,21 @@ impl PartialEq for Tuple {
     }
 }
 impl Eq for Tuple {}
+
+// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// the Neg trait on the &Tuple (reference) type. 
+impl Neg for &Tuple {
+    type Output = Tuple;
+
+    fn neg(self) -> Self::Output {
+        Tuple {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: self.w
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -202,14 +220,26 @@ mod tests {
 
     #[test]
     fn subtract_two_vectors() {
-        let v1 = Tuple::point(3.0, 2.0, 1.0);
-        let v2 = Tuple::point(5.0, 6.0, 7.0);
-        let y: Tuple = &v1 - &v2;
+        let p1 = Tuple::point(3.0, 2.0, 1.0);
+        let p2 = Tuple::point(5.0, 6.0, 7.0);
+        let y: Tuple = &p1 - &p2;
         let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
         let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn negate_tuple() {
+        let p = Tuple::point(3.0, -2.0, 1.0);
+        let expected = Tuple::point(-3.0, 2.0, -1.0);
+        let y: Tuple = -&p;
+        let x: bool = expected == y;
+        assert_eq!(
+            true, x,
+            "The negation of the tuple should equal {:#?}, value was {:#?}", expected, y
         )
     }
 }
