@@ -17,6 +17,8 @@ fn main() {
     println!("{:#?}", d);
     println!("Negate a Tuple.");
     println!("{:#?}", -&d);
+    println!("Negate a Tuple without a reference.");
+    println!("{:#?}", -d);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -79,7 +81,7 @@ impl Add for &Tuple {
     }
 }
 
-// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// To avoid copying/clone the Tuple type everytime a - operator is used, we are implementing
 // the Sub trait on the &Tuple (reference) type. 
 impl Sub for &Tuple {
     type Output = Tuple;
@@ -110,9 +112,22 @@ impl PartialEq for Tuple {
 }
 impl Eq for Tuple {}
 
-// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// To avoid copying/clone the Tuple type everytime a - operator is used, we are implementing
 // the Neg trait on the &Tuple (reference) type. 
 impl Neg for &Tuple {
+    type Output = Tuple;
+
+    fn neg(self) -> Self::Output {
+        Tuple {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: self.w
+        }
+    }
+}
+
+impl Neg for Tuple {
     type Output = Tuple;
 
     fn neg(self) -> Self::Output {
@@ -236,6 +251,18 @@ mod tests {
         let p = Tuple::point(3.0, -2.0, 1.0);
         let expected = Tuple::point(-3.0, 2.0, -1.0);
         let y: Tuple = -&p;
+        let x: bool = expected == y;
+        assert_eq!(
+            true, x,
+            "The negation of the tuple should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn negate_tuple_no_moving() {
+        let p = Tuple::point(3.0, -2.0, 1.0);
+        let expected = Tuple::point(-3.0, 2.0, -1.0);
+        let y: Tuple = -p;
         let x: bool = expected == y;
         assert_eq!(
             true, x,
