@@ -4,6 +4,7 @@ use std::cmp::Eq;
 use std::ops::Neg;
 use std::ops::Mul;
 use std::ops::Div;
+use std::f32;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
@@ -23,6 +24,8 @@ fn main() {
     println!("{:#?}", &d * 1.22);
     println!("Divide a vector by a scalar.");
     println!("{:#?}", &d / 0.0373);
+    println!("Magnitude a vector");
+    println!("{:#?}", b.mag());
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -64,6 +67,18 @@ impl Tuple {
             y,
             z,
             w: 0
+        }
+    }
+
+    // TODO: May need to introduce a higher order type above Tuple in order to avoid calling mag
+    // on a point, which should result in a mag of 0. I can implement it here, but it wont be as 
+    // usable. This would mean that a point type wouldn't have a mag method, but a vector type would.
+    fn mag(&self) -> f32 {
+        if self.w == 0 {
+            (self.x.powi(2) + self.y.powi(2) +  self.z.powi(2)).sqrt()
+        }
+        else {
+            0.0
         }
     }
 }
@@ -326,6 +341,30 @@ mod tests {
         assert_eq!(
             true, r,
             "The division of the tuple and scalar should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn magnitude_of_1_dim_vec() {
+        let v = Tuple::vector(1.0, 0.0, 0.0);
+        let expected = 1.0;
+        let output: f32 = v.mag();
+        let r: bool =  f_equal(expected, output);
+        assert_eq!(
+            true, r,
+            "The magnitude of the vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn magnitude_of_vector() {
+        let v = Tuple::vector(1.0, -2.0, 3.0);
+        let expected = 3.74165;
+        let output: f32 = v.mag();
+        let r: bool = f_equal(expected, output);
+        assert_eq!(
+            true, r,
+            "The magnitude of the vector should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
