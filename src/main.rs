@@ -2,6 +2,7 @@ use std::ops::Add;
 use std::ops::Sub;
 use std::cmp::Eq;
 use std::ops::Neg;
+use std::ops::Mul;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
@@ -17,8 +18,8 @@ fn main() {
     println!("{:#?}", d);
     println!("Negate a Tuple.");
     println!("{:#?}", -&d);
-    println!("Negate a Tuple without a reference.");
-    println!("{:#?}", -d);
+    println!("Multiple a vector by a scalar.");
+    println!("{:#?}", &d * 1.22);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -98,6 +99,21 @@ impl Sub for &Tuple {
     }
 }
 
+// Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to multiple a Tuple
+// by an f32.
+impl Mul<f32> for &Tuple {
+    type Output = Tuple;
+
+    fn mul(self, other: f32) -> Tuple {
+        Tuple {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+            w: self.w
+        }
+    }
+}
+
 // Must overload PartialEq instead of leveraging Derive PartialEq on the Tuple struct. This is
 // because we have a custom implementation for comparing floating point numbers f_equal.
 impl PartialEq for Tuple {
@@ -115,19 +131,6 @@ impl Eq for Tuple {}
 // To avoid copying/clone the Tuple type everytime a - operator is used, we are implementing
 // the Neg trait on the &Tuple (reference) type. 
 impl Neg for &Tuple {
-    type Output = Tuple;
-
-    fn neg(self) -> Self::Output {
-        Tuple {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-            w: self.w
-        }
-    }
-}
-
-impl Neg for Tuple {
     type Output = Tuple;
 
     fn neg(self) -> Self::Output {
@@ -262,11 +265,35 @@ mod tests {
     fn negate_tuple_no_moving() {
         let p = Tuple::point(3.0, -2.0, 1.0);
         let expected = Tuple::point(-3.0, 2.0, -1.0);
-        let y: Tuple = -p;
+        let y: Tuple = -&p;
         let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The negation of the tuple should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn multiply_tuple_by_scalar() {
+        let p = Tuple::point(3.0, -2.0, 1.0);
+        let expected = Tuple::point(10.5, -7.0, 3.5);
+        let output: Tuple = &p * 3.5;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The multiplication of the tuple and scalar should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn multiply_tuple_by_fraction() {
+        let p = Tuple::point(3.0, -2.0, 1.0);
+        let expected = Tuple::point(1.5, -1.0, 0.5);
+        let output: Tuple = &p * 0.5;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The multiplication of the tuple and fraction should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
