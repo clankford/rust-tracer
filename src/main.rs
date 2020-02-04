@@ -28,6 +28,8 @@ fn main() {
     println!("{:#?}", b.mag());
     println!("Normalized vector");
     println!("{:#?}", b.norm());
+    println!("Dot product of vectors");
+    println!("{:#?}", &b * &-&b);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -49,6 +51,7 @@ struct Tuple {
     w: u8
 }
 
+// TODO: Should implement methods for each operator instead of overloading. This will be for completion.
 impl Tuple {
     // Using field init shorthand because the function parameter names are the same
     // as the struct's field names.
@@ -143,6 +146,16 @@ impl Mul<f32> for &Tuple {
             z: self.z * other,
             w: self.w
         }
+    }
+}
+
+// Acts as the dot product for vectors.
+// TODO: Should panic if a point is passed in.
+impl Mul for &Tuple {
+    type Output = f32;
+
+    fn mul(self, other: &Tuple) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 }
 
@@ -415,6 +428,19 @@ mod tests {
         assert_eq!(
             true, r,
             "The magnitude of the vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn dot_product_of_vector() {
+        let v1 = Tuple::vector(1.0, 2.0, 3.0);
+        let v2 = Tuple::vector(2.0, 3.0, 4.0);
+        let expected = 20.0;
+        let output = &v1 * &v2;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The dot product of the vectors should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
