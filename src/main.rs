@@ -3,6 +3,7 @@ use std::ops::Sub;
 use std::cmp::Eq;
 use std::ops::Neg;
 use std::ops::Mul;
+use std::ops::Div;
 
 fn main() {
     let a = Tuple::point(4.3, -4.2, 3.1);
@@ -20,6 +21,8 @@ fn main() {
     println!("{:#?}", -&d);
     println!("Multiple a vector by a scalar.");
     println!("{:#?}", &d * 1.22);
+    println!("Divide a vector by a scalar.");
+    println!("{:#?}", &d / 0.0373);
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -100,7 +103,8 @@ impl Sub for &Tuple {
 }
 
 // Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to multiple a Tuple
-// by an f32.
+// by an f32. 
+// https://doc.rust-lang.org/book/ch19-03-advanced-traits.html?highlight=overload#default-generic-type-parameters-and-operator-overloading
 impl Mul<f32> for &Tuple {
     type Output = Tuple;
 
@@ -109,6 +113,22 @@ impl Mul<f32> for &Tuple {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
+            w: self.w
+        }
+    }
+}
+
+// Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to divide a Tuple
+// by an f32. 
+// https://doc.rust-lang.org/book/ch19-03-advanced-traits.html?highlight=overload#default-generic-type-parameters-and-operator-overloading
+impl Div<f32> for &Tuple {
+    type Output = Tuple;
+
+    fn div(self, other: f32) -> Tuple {
+        Tuple {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
             w: self.w
         }
     }
@@ -294,6 +314,18 @@ mod tests {
         assert_eq!(
             true, r,
             "The multiplication of the tuple and fraction should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn divide_tuple_by_scalar() {
+        let p = Tuple::point(3.0, -2.0, 1.0);
+        let expected = Tuple::point(6.0, -4.0, 2.0);
+        let output: Tuple = &p / 0.5;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The division of the tuple and scalar should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
