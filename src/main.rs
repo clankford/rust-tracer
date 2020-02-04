@@ -26,6 +26,8 @@ fn main() {
     println!("{:#?}", &d / 0.0373);
     println!("Magnitude a vector");
     println!("{:#?}", b.mag());
+    println!("Normalized vector");
+    println!("{:#?}", b.norm());
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -79,6 +81,17 @@ impl Tuple {
         }
         else {
             0.0
+        }
+    }
+
+    // TODO: Should panic if trying to take a norm of a point.
+    fn norm(&self) -> Tuple {
+        let m: f32 = self.mag();
+        Tuple {
+            x: self.x / m,
+            y: self.y / m,
+            z: self.z / m,
+            w: 0
         }
     }
 }
@@ -361,6 +374,43 @@ mod tests {
         let v = Tuple::vector(1.0, -2.0, 3.0);
         let expected = 3.74165;
         let output: f32 = v.mag();
+        let r: bool = f_equal(expected, output);
+        assert_eq!(
+            true, r,
+            "The magnitude of the vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn normalize_1_dim_vec() {
+        let v = Tuple::vector(4.0, 0.0, 0.0);
+        let expected = Tuple::vector(1.0, 0.0, 0.0);
+        let output: Tuple = v.norm();
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The normalized vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn normalize_vec() {
+        let v = Tuple::vector(1.0, 2.0, 3.0);
+        let expected = Tuple::vector(0.26726, 0.53452, 0.80178);
+        let output: Tuple = v.norm();
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The normalized vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn mag_of_normalized_vector() {
+        let v = Tuple::vector(1.0, 2.0, 3.0);
+        let expected = 1.0;
+        let nv = v.norm();
+        let output: f32 = nv.mag();
         let r: bool = f_equal(expected, output);
         assert_eq!(
             true, r,
