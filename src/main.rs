@@ -30,6 +30,8 @@ fn main() {
     println!("{:#?}", b.norm());
     println!("Dot product of vectors");
     println!("{:#?}", &b * &-&b);
+    println!("Cross product of vectors");
+    println!("{:#?}", b.cross(-&b));
 }
 
 fn f_equal(a: f32, b: f32) -> bool {
@@ -94,6 +96,16 @@ impl Tuple {
             x: self.x / m,
             y: self.y / m,
             z: self.z / m,
+            w: 0
+        }
+    }
+
+    // TODO: Should panic if trying to take a cross product of a point.
+    fn cross(&self, other: Tuple) -> Tuple {
+        Tuple {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
             w: 0
         }
     }
@@ -204,6 +216,7 @@ impl Neg for &Tuple {
     }
 }
 
+// TODO: Find a way to group unit tests logically so they are more readable.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -241,10 +254,9 @@ mod tests {
     fn values_are_not_equal() {
         let a: f32 = 0.00001;
         let b: f32 = 0.000021;
-        let x: bool = f_equal(a, b);
-        assert_eq!(
-            false, x,
-            "The values {} and {} should be equal = false, value was {}", a, b, x
+        assert_ne!(
+            true, f_equal(a, b),
+            "The values {} and {} should be equal = false, value was {}", a, b, f_equal(a, b)
         )
     }
 
@@ -441,6 +453,32 @@ mod tests {
         assert_eq!(
             true, r,
             "The dot product of the vectors should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn cross_product_of_vector() {
+        let v1 = Tuple::vector(1.0, 2.0, 3.0);
+        let v2 = Tuple::vector(2.0, 3.0, 4.0);
+        let expected = Tuple::vector(-1.0, 2.0, -1.0);
+        let output = v1.cross(v2);
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The cross product of the vectors should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn cross_product_of_vector_reverse() {
+        let v1 = Tuple::vector(1.0, 2.0, 3.0);
+        let v2 = Tuple::vector(2.0, 3.0, 4.0);
+        let expected = Tuple::vector(1.0, -2.0, 1.0);
+        let output = v2.cross(v1);
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The cross product of the vectors should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
