@@ -1,9 +1,5 @@
-use std::ops::Add;
-use std::ops::Sub;
+use std::ops::{Add,Sub,Neg,Mul,Div};
 use std::cmp::Eq;
-use std::ops::Neg;
-use std::ops::Mul;
-use std::ops::Div;
 use std::f32;
 
 fn main() {
