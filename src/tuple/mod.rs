@@ -12,6 +12,16 @@ fn f_equal(a: f32, b: f32) -> bool {
     }
 }
 
+// TODO: Is there a way to create Structs for Vector & Point and refactor this module to handle the
+// operators against those concrete types without duplicating functionality?
+// Add can add any two tuples together. Dot can only be done on two vectors.
+// Trait Tuple that has an add function with default functionality that adds two tuples together
+// --Currently no way to do the above within a default implementation.
+// Vector implements Tuple, inherits default add functionality.
+// Point implements Tuple, inherits default add functionality.
+// Vector has method dot, can only dot two Vectors
+// Point does not have method dot.
+
 #[derive(Debug)]
 pub struct Tuple {
     pub x: f32,
