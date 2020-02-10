@@ -31,8 +31,12 @@ pub struct Tuple {
     pub w: u8
 }
 
-// TODO: Should implement methods for each operator instead of overloading. This will be for completion.
+// TODO: Should implement methods for each operator in addition to overloading. 
+// This will be for completion. I can't find an elegant solution for this without duplicating
+// the implementation of (for instance) the add method in the method itself and the overloaded +
+// operator.
 impl Tuple {
+    
     // Using field init shorthand because the function parameter names are the same
     // as the struct's field names.
     pub fn point(x: f32, y: f32, z: f32) -> Tuple {
@@ -55,9 +59,7 @@ impl Tuple {
         }
     }
 
-    // TODO: May need to introduce a higher order type above Tuple in order to avoid calling mag
-    // on a point, which should result in a mag of 0. I can implement it here, but it wont be as 
-    // usable. This would mean that a point type wouldn't have a mag method, but a vector type would.
+    // Magnitude of a point is 0.
     pub fn mag(&self) -> f32 {
         if self.w == 0 {
             (self.x.powi(2) + self.y.powi(2) +  self.z.powi(2)).sqrt()
@@ -67,41 +69,55 @@ impl Tuple {
         }
     }
 
-    // TODO: Should panic if trying to take a norm of a point.
+    // Can only normalize a vector.
     pub fn norm(&self) -> Tuple {
-        let m: f32 = self.mag();
-        Tuple {
-            x: self.x / m,
-            y: self.y / m,
-            z: self.z / m,
-            w: 0
+        if self.w == 0 {
+            let m: f32 = self.mag();
+            Tuple {
+                x: self.x / m,
+                y: self.y / m,
+                z: self.z / m,
+                w: 0
+            }
+        }
+        else {
+            panic!("Cannot normalize a point, w = 1.")
         }
     }
 
-    // TODO: Should panic if trying to take a cross product of a point.
+    // Can only take a cross product with two vectors.
     pub fn cross(&self, other: Tuple) -> Tuple {
-        Tuple {
-            x: self.y * other.z - self.z * other.y,
-            y: self.z * other.x - self.x * other.z,
-            z: self.x * other.y - self.y * other.x,
-            w: 0
+        if self.w == 0 && other.w == 0 {
+            Tuple {
+                x: self.y * other.z - self.z * other.y,
+                y: self.z * other.x - self.x * other.z,
+                z: self.x * other.y - self.y * other.x,
+                w: 0
+            }
+        }
+        else {
+            panic!("Cannot take the cross product with a point.")
         }
     }
 }
 
-// To avoid copying/clone the Tuple type everytime a + operator is used, we are implementing
+// To avoid copying/cloning the Tuple type everytime a + operator is used, we are implementing
 // the Add trait on the &Tuple (reference) type. 
 impl Add for &Tuple {
     type Output = Tuple;
 
-    // TODO: Return a Result so that an error can be returned if two points are 
-    // attempted to be added together. Or Panic.
+    // Only allow for vector + vector or point + vector.
     fn add(self, other: &Tuple) -> Tuple {
-        Tuple {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-            w: self.w + other.w
+        if !(self.w == 1 && other.w == 1) {
+            Tuple {
+                x: self.x + other.x,
+                y: self.y + other.y,
+                z: self.z + other.z,
+                w: self.w + other.w
+            }
+        }
+        else {
+            panic!("Cannot add two points together.")
         }
     }
 }
@@ -111,14 +127,18 @@ impl Add for &Tuple {
 impl Sub for &Tuple {
     type Output = Tuple;
 
-    // TODO: Return a Result so that an error can be returned if two points are 
-    // attempted to be added together. Or Panic.
+    // Only allow for vector - vector, point - vector, point - point, but not vector - point.
     fn sub(self, other: &Tuple) -> Tuple {
-        Tuple {
-            x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z,
-            w: self.w - other.w
+        if !(self.w == 0 && other.w == 1) {
+            Tuple {
+                x: self.x - other.x,
+                y: self.y - other.y,
+                z: self.z - other.z,
+                w: self.w - other.w
+            }
+        }
+        else {
+            panic!("Cannot subtract two points from eachother.")
         }
     }
 }
@@ -126,6 +146,7 @@ impl Sub for &Tuple {
 // Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to multiple a Tuple
 // by an f32. 
 // https://doc.rust-lang.org/book/ch19-03-advanced-traits.html?highlight=overload#default-generic-type-parameters-and-operator-overloading
+// Tuple * Scalar
 impl Mul<f32> for &Tuple {
     type Output = Tuple;
 
@@ -140,18 +161,23 @@ impl Mul<f32> for &Tuple {
 }
 
 // Acts as the dot product for vectors.
-// TODO: Should panic if a point is passed in.
 impl Mul for &Tuple {
     type Output = f32;
 
     fn mul(self, other: &Tuple) -> f32 {
-        self.x * other.x + self.y * other.y + self.z * other.z
+        if !(self.w == 1 || other.w == 1) {
+            self.x * other.x + self.y * other.y + self.z * other.z
+        }
+        else {
+            panic!("Cannot take the dot product with a vector and a point.")
+        }
     }
 }
 
 // Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to divide a Tuple
 // by an f32. 
 // https://doc.rust-lang.org/book/ch19-03-advanced-traits.html?highlight=overload#default-generic-type-parameters-and-operator-overloading
+// Tuple / scalar
 impl Div<f32> for &Tuple {
     type Output = Tuple;
 
@@ -194,7 +220,6 @@ impl Neg for &Tuple {
     }
 }
 
-// TODO: Find a way to group unit tests logically so they are more readable.
 #[cfg(test)]
 mod tests {
     use super::*;
