@@ -12,6 +12,7 @@ fn f_equal(a: f32, b: f32) -> bool {
     }
 }
 
+
 // TODO: Is there a way to create Structs for Vector & Point and refactor this module to handle the
 // operators against those concrete types without duplicating functionality?
 // Add can add any two tuples together. Dot can only be done on two vectors.
@@ -28,7 +29,7 @@ pub struct Tuple {
     pub y: f32,
     pub z: f32,
     // When w = 1 the tuple is a point, when w = 0 the tuple is a vector.
-    pub w: u8
+    pub w: Option<u8>
 }
 
 // TODO: Should implement methods for each operator in addition to overloading. 
@@ -44,7 +45,7 @@ impl Tuple {
             x,
             y,
             z,
-            w: 1
+            w: Some(1)
         }
     }
 
@@ -55,69 +56,84 @@ impl Tuple {
             x,
             y,
             z,
-            w: 0
+            w: Some(0)
+        }
+    }
+
+    pub fn color(x: f32, y: f32, z: f32) -> Tuple {
+        Tuple {
+            x,
+            y,
+            z,
+            w: None
         }
     }
 
     // Magnitude of a point is 0.
     pub fn mag(&self) -> f32 {
-        if self.w == 0 {
-            (self.x.powi(2) + self.y.powi(2) +  self.z.powi(2)).sqrt()
-        }
-        else {
-            0.0
+        match self.w {
+            Some(0) => (self.x.powi(2) + self.y.powi(2) +  self.z.powi(2)).sqrt(),
+            Some(1) => 0.0,
+            _ => panic!("Cannot take the magnitude of a color"),
         }
     }
 
     // Can only normalize a vector.
     pub fn norm(&self) -> Tuple {
-        if self.w == 0 {
-            let m: f32 = self.mag();
-            Tuple {
-                x: self.x / m,
-                y: self.y / m,
-                z: self.z / m,
-                w: 0
-            }
-        }
-        else {
-            panic!("Cannot normalize a point, w = 1.")
+        match self.w {
+            Some(0) => {
+                let m: f32 = self.mag();
+                Tuple {
+                    x: self.x / m,
+                    y: self.y / m,
+                    z: self.z / m,
+                    w: Some(0)
+                }
+            },
+            Some(1) => panic!("Cannot normalize a point, w = Some(1)."),
+            _ => panic!("Cannot normalize a color, w = None"),
         }
     }
 
     // Can only take a cross product with two vectors.
     pub fn cross(&self, other: Tuple) -> Tuple {
-        if self.w == 0 && other.w == 0 {
-            Tuple {
-                x: self.y * other.z - self.z * other.y,
-                y: self.z * other.x - self.x * other.z,
-                z: self.x * other.y - self.y * other.x,
-                w: 0
-            }
-        }
-        else {
-            panic!("Cannot take the cross product with a point.")
+        match (self.w, other.w) {
+            (Some(0), Some(0)) => {
+                Tuple {
+                    x: self.y * other.z - self.z * other.y,
+                    y: self.z * other.x - self.x * other.z,
+                    z: self.x * other.y - self.y * other.x,
+                    w: Some(0)
+                }
+            },
+            _ => panic!("Can only take the cross product of two vectors"),
         }
     }
 }
+
 
 // To avoid copying/cloning the Tuple type everytime a + operator is used, we are implementing
 // the Add trait on the &Tuple (reference) type. 
 impl Add for &Tuple {
     type Output = Tuple;
 
-    // Only allow for vector + vector or point + vector.
+    // Only allow for vector + vector or point + vector or color + color.
     fn add(self, other: &Tuple) -> Tuple {
-        if !(self.w == 1 && other.w == 1) {
-            Tuple {
-                x: self.x + other.x,
-                y: self.y + other.y,
-                z: self.z + other.z,
-                w: self.w + other.w
-            }
-        }
-        else {
-            panic!("Cannot add two points together.")
+        match (self.w, other.w) {
+            (Some(0), Some(0)) |
+            (Some(1), Some(0)) |
+            (Some(0), Some(1)) |
+            (None, None) => {
+                Tuple {
+                    x: self.x + other.x,
+                    y: self.y + other.y,
+                    z: self.z + other.z,
+                    // Safe to use unwrap here because we know that self.w or other.w is
+                    // never going to be None, due to the match expression above.
+                    w: Some(self.w.unwrap() + other.w.unwrap())
+                }
+            },
+            _ => panic!("Only points and vectors can be added to vectors, or color added to color.")
         }
     }
 }
@@ -127,23 +143,29 @@ impl Add for &Tuple {
 impl Sub for &Tuple {
     type Output = Tuple;
 
-    // Only allow for vector - vector, point - vector, point - point, but not vector - point.
+    // Only allow for vector - vector, point - vector, point - point, color - color, 
+    // but not vector - point.
     fn sub(self, other: &Tuple) -> Tuple {
-        if !(self.w == 0 && other.w == 1) {
-            Tuple {
-                x: self.x - other.x,
-                y: self.y - other.y,
-                z: self.z - other.z,
-                w: self.w - other.w
-            }
-        }
-        else {
-            panic!("Cannot subtract two points from eachother.")
+        match (self.w, other.w) {
+            (Some(0), Some(0)) |
+            (Some(1), Some(0)) |
+            (Some(1), Some(1)) |
+            (None, None) => {
+                Tuple {
+                    x: self.x - other.x,
+                    y: self.y - other.y,
+                    z: self.z - other.z,
+                    // Safe to use unwrap here because we know that self.w or other.w is
+                    // never going to be None, due to the match expression above.
+                    w: Some(self.w.unwrap() - other.w.unwrap())
+                }
+            },
+            _ => panic!("Can only subtract two vectors, two points, two colors, or a point from a vector.")
         }
     }
 }
 
-// Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to multiple a Tuple
+// Adding <f32> allows us to dictate the type of RHS. In this case, it allows us to multiply a Tuple
 // by an f32. 
 // https://doc.rust-lang.org/book/ch19-03-advanced-traits.html?highlight=overload#default-generic-type-parameters-and-operator-overloading
 // Tuple * Scalar
@@ -165,11 +187,14 @@ impl Mul for &Tuple {
     type Output = f32;
 
     fn mul(self, other: &Tuple) -> f32 {
-        if !(self.w == 1 || other.w == 1) {
-            self.x * other.x + self.y * other.y + self.z * other.z
-        }
-        else {
-            panic!("Cannot take the dot product with a vector and a point.")
+        match (self.w, other.w) {
+            (Some(0), Some(0)) |
+            (Some(1), Some(0)) |
+            (Some(0), Some(1)) |
+            (None, None) => {
+                self.x * other.x + self.y * other.y + self.z * other.z
+            },
+            _ => panic!("Can't take the dot product of two points")
         }
     }
 }
@@ -182,11 +207,16 @@ impl Div<f32> for &Tuple {
     type Output = Tuple;
 
     fn div(self, other: f32) -> Tuple {
-        Tuple {
-            x: self.x / other,
-            y: self.y / other,
-            z: self.z / other,
-            w: self.w
+        match self.w {
+            None => panic!("Cannot divide using colors."),
+            _ => {
+                Tuple {
+                    x: self.x / other,
+                    y: self.y / other,
+                    z: self.z / other,
+                    w: self.w
+                }
+            }   
         }
     }
 }
@@ -228,8 +258,8 @@ mod tests {
     fn tuple_is_a_vector() {
         let v = Tuple::vector(1.0, 2.0, 3.0);
         assert_eq!(
-            0, v.w,
-            "The 'w' field of a vector should be 0, value was {}", v.w
+            0, v.w.unwrap(),
+            "The 'w' field of a vector should be 0, value was {}", v.w.unwrap()
         );
     }
 
@@ -237,9 +267,19 @@ mod tests {
     fn tuple_is_a_point() {
         let p = Tuple::point(1.0, 2.0, 3.0);
         assert_eq!(
-            1, p.w,
-            "The 'w' field of a point should be 1, value was {}", p.w
+            1, p.w.unwrap(),
+            "The 'w' field of a point should be 1, value was {}", p.w.unwrap()
         );
+    }
+
+    // TODO: This is a weak test for color. Check to see if w = None
+    #[test]
+    fn tuple_is_a_color() {
+        let c = Tuple::color(-0.5, 0.4, 1.7);
+        let red = -0.5;
+        let green = 0.4;
+        let blue = 1.7;
+        assert!(red == c.x && green == c.y && blue == c.z, "r = {}, g = {}, b = {}", c.x, c.y, c.z);
     }
 
     #[test]
