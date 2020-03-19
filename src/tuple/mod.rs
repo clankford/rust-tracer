@@ -106,7 +106,24 @@ impl Tuple {
                     w: Some(0)
                 }
             },
-            _ => panic!("Can only take the cross product of two vectors"),
+            _ => panic!("Can only take the cross product of two vectors."),
+        }
+    }
+
+    // Can only take the Hadamard Product of two of the same type of Tuple
+    pub fn hadamard_product(&self, other: Tuple) -> Tuple {
+        match (self.w, other.w) {
+            (Some(0), Some(0)) |
+            (Some(1), Some(1)) |
+            (None, None) => {
+                Tuple {
+                    x: self.x * other.x,
+                    y: self.y * other.y,
+                    z: self.z * other.z,
+                    w: self.w
+                }
+            },
+            _ => panic!("Can only take the Hadamard Product of two of the same type of Tuple.")
         }
     }
 }
@@ -122,8 +139,7 @@ impl Add for &Tuple {
         match (self.w, other.w) {
             (Some(0), Some(0)) |
             (Some(1), Some(0)) |
-            (Some(0), Some(1)) |
-            (None, None) => {
+            (Some(0), Some(1)) => {
                 Tuple {
                     x: self.x + other.x,
                     y: self.y + other.y,
@@ -131,6 +147,14 @@ impl Add for &Tuple {
                     // Safe to use unwrap here because we know that self.w or other.w is
                     // never going to be None, due to the match expression above.
                     w: Some(self.w.unwrap() + other.w.unwrap())
+                }
+            },
+            (None, None) => {
+                Tuple {
+                    x: self.x + other.x,
+                    y: self.y + other.y,
+                    z: self.z + other.z,
+                    w: None
                 }
             },
             _ => panic!("Only points and vectors can be added to vectors, or color added to color.")
@@ -149,8 +173,7 @@ impl Sub for &Tuple {
         match (self.w, other.w) {
             (Some(0), Some(0)) |
             (Some(1), Some(0)) |
-            (Some(1), Some(1)) |
-            (None, None) => {
+            (Some(1), Some(1)) => {
                 Tuple {
                     x: self.x - other.x,
                     y: self.y - other.y,
@@ -158,6 +181,14 @@ impl Sub for &Tuple {
                     // Safe to use unwrap here because we know that self.w or other.w is
                     // never going to be None, due to the match expression above.
                     w: Some(self.w.unwrap() - other.w.unwrap())
+                }
+            },
+            (None, None) => {
+                Tuple {
+                    x: self.x - other.x,
+                    y: self.y - other.y,
+                    z: self.z - other.z,
+                    w: None
                 }
             },
             _ => panic!("Can only subtract two vectors, two points, two colors, or a point from a vector.")
@@ -190,11 +221,10 @@ impl Mul for &Tuple {
         match (self.w, other.w) {
             (Some(0), Some(0)) |
             (Some(1), Some(0)) |
-            (Some(0), Some(1)) |
-            (None, None) => {
+            (Some(0), Some(1)) => {
                 self.x * other.x + self.y * other.y + self.z * other.z
             },
-            _ => panic!("Can't take the dot product of two points")
+            _ => panic!("Can't take the dot product of two points or with colors.")
         }
     }
 }
@@ -225,12 +255,17 @@ impl Div<f32> for &Tuple {
 // because we have a custom implementation for comparing floating point numbers f_equal.
 impl PartialEq for Tuple {
     fn eq(&self, other: &Tuple) -> bool {
-        if f_equal(self.x, other.x) & f_equal(self.y, other.y) &
-            f_equal(self.z, other.z) & (self.w == other.w) {
-                true
-            } else {
-                false
+        match (self.w, other.w) {
+            (None, None) | (Some(0), Some(0)) | (Some(1), Some(1)) => {
+                if f_equal(self.x, other.x) & f_equal(self.y, other.y) &
+                    f_equal(self.z, other.z) {
+                        true
+                    } else {
+                        false
+                    }  
             }
+        _ => false         
+        }   
     }
 }
 impl Eq for Tuple {}
@@ -315,6 +350,17 @@ mod tests {
     }
 
     #[test]
+    fn colors_are_equal() {
+        let c1 = Tuple::color(0.5, 0.2, 0.3);
+        let c2 = Tuple::color(0.5, 0.2, 0.3);
+        let x: bool = c1 == c2;
+        assert_eq!(
+            true, x,
+            "The colors a and b should be equal = true, value was {}", x
+        )
+    }
+
+    #[test]
     fn add_vector_and_point() {
         let p = Tuple::point(3.0, -2.0, 5.0);
         let v = Tuple::vector(-2.0, 3.0, 1.0);
@@ -327,15 +373,39 @@ mod tests {
     }
 
     #[test]
+    fn add_two_colors() {
+        let c1 = Tuple::color(0.5, 0.2, 0.3);
+        let c2 = Tuple::color(0.5, 0.2, 0.3);
+        let c3 = &c1 + &c2;
+        let x = Tuple::color(1.0, 0.4, 0.6) == c3;
+        assert_eq!(
+            true, x,
+            "The sum of the colors equal (1.0, 0.4, 0.6), value was {:#?}", x
+        )
+    }
+
+    #[test]
     fn subtract_two_points() {
         let p1 = Tuple::point(3.0, 2.0, 1.0);
         let p2 = Tuple::point(5.0, 6.0, 7.0);
         let y: Tuple = &p1 - &p2;
-        let expected: Tuple = Tuple::vector(-2.0, -4.0, -6.0);
+        let expected = Tuple::vector(-2.0, -4.0, -6.0);
         let x: bool = expected == y;
         assert_eq!(
             true, x,
             "The difference between the two points should equal {:#?}, value was {:#?}", expected, y
+        )
+    }
+
+    #[test]
+    fn subtract_two_colors() {
+        let c1 = Tuple::color(0.5, 0.2, 0.3);
+        let c2 = Tuple::color(0.3, 0.1, 0.1);
+        let c3 = &c1 - &c2;
+        let x = Tuple::color(0.2, 0.1, 0.2) == c3;
+        assert_eq!(
+            true, x,
+            "The difference of the colors equal (1.0, 0.4, 0.6), value was {:#?}", x
         )
     }
 
@@ -410,6 +480,18 @@ mod tests {
         assert_eq!(
             true, r,
             "The multiplication of the tuple and fraction should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn multiply_color_by_scalar() {
+        let c = Tuple::color(0.7, 0.4, 0.3);
+        let expected = Tuple::color(1.4, 0.8, 0.6);
+        let output: Tuple = &c * 2.0;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The multiplication of the color and scalar should equal {:#?}, value was {:#?}", expected, output
         )
     }
 
@@ -492,6 +574,19 @@ mod tests {
         let v2 = Tuple::vector(2.0, 3.0, 4.0);
         let expected = 20.0;
         let output = &v1 * &v2;
+        let r: bool = expected == output;
+        assert_eq!(
+            true, r,
+            "The dot product of the vectors should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn hadamard_product_of_two_colors() {
+        let c1 = Tuple::color(1.0, 2.0, 3.0);
+        let c2 = Tuple::color(2.0, 3.0, 4.0);
+        let expected = Tuple::color(2.0, 6.0, 12.0);
+        let output = c1.hadamard_product(c2);
         let r: bool = expected == output;
         assert_eq!(
             true, r,
