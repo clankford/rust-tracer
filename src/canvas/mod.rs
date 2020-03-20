@@ -15,6 +15,16 @@ impl Canvas {
             pixels: vec![Tuple::color(0.0, 0.0, 0.0); width * height]
         }
     }
+
+    // TODO: Add error handling for out of bounds
+    pub fn pixel_at(&self, x: usize, y: usize) -> Tuple {
+        self.pixels[(x * y) - 1]
+    }
+
+    // TODO: Add error handling for out of bounds
+    pub fn write_pixel(&mut self, x: usize, y: usize, color: Tuple) {
+        self.pixels[(x * y) - 1] = color
+    }
 }
 
 #[cfg(test)]
@@ -28,5 +38,16 @@ mod tests {
         assert!(c.width == 10 && c.height == 20 && length == 200, 
             "Result: width = {}, height = {}, length = {}; 
             Expected: width = 10, height = 20, length = 200", c.width, c.height, length);
+    }
+
+    #[test]
+    fn update_pixel_color() {
+        let mut c = Canvas::new(10, 20);
+        let new_pixel = Tuple::color(1.0, 1.0, 1.0);
+        c.write_pixel(10, 20, new_pixel);
+        let p = c.pixel_at(10, 20);
+        assert!(p == Tuple::color(1.0, 1.0, 1.0),
+            "Result: R = {}, G = {}, B = {};
+            Expected: R = 1.0, G = 1.0, B = 1.0", p.x, p.y, p.z)
     }
 }
