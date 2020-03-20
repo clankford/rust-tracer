@@ -23,7 +23,7 @@ fn f_equal(a: f32, b: f32) -> bool {
 // Vector has method dot, can only dot two Vectors
 // Point does not have method dot.
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Tuple {
     pub x: f32,
     pub y: f32,

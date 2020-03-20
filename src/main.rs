@@ -1,4 +1,5 @@
 mod tuple;
+mod canvas;
 use tuple::Tuple;
 
 fn main() {
