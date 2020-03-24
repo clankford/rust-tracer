@@ -1,9 +1,17 @@
 mod tuple;
 mod canvas;
 use tuple::Tuple;
+use canvas::Canvas;
 
 fn main() {
     
+    // Canvas Code Sandbox
+    let mut canvas = Canvas::new(20, 20);
+    canvas.write_pixel(1, 1, Tuple::color(0.5, 0.5, 0.5));
+    let p = canvas.pixel_at(1, 1);
+    println!("{}", p.x);
+ 
+    // Tuple Code Sandbox
     let mut p = Projectile {
         position: Tuple::point(0.0, 1.0, 0.0),
         velocity: Tuple::vector(1.0, 1.0, 0.0).norm()
