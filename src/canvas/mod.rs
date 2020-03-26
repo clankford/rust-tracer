@@ -25,6 +25,10 @@ impl Canvas {
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Tuple) {
         self.pixels[(x * y) - 1] = color
     }
+
+    pub fn canvas_to_ppm(&self) -> String {
+        format!("P3\n{} {}\n255", self.width, self.height)
+    }
 }
 
 #[cfg(test)]
@@ -49,5 +53,12 @@ mod tests {
         assert!(p == Tuple::color(1.0, 1.0, 1.0),
             "Result: R = {}, G = {}, B = {};
             Expected: R = 1.0, G = 1.0, B = 1.0", p.x, p.y, p.z)
+    }
+
+    #[test]
+    fn construct_ppm_header() {
+        let c = Canvas::new(5, 3);
+        let ppm = c.canvas_to_ppm();
+        assert!(ppm == "P3\n5 3\n255", "Result: PPM = {}; Expected: PPM = P3\n5 3\n255", ppm);
     }
 }
