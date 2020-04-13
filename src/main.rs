@@ -3,6 +3,7 @@ mod canvas;
 use tuple::Tuple;
 use canvas::Canvas;
 
+// TODO: Convert this to a library project and refactor to have a separate main.rs use that library.
 fn main() {
     
     // Canvas Code Sandbox
