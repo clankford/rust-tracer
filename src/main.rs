@@ -11,6 +11,9 @@ fn main() {
     canvas.write_pixel(1, 1, Tuple::color(0.5, 0.5, 0.5));
     let p = canvas.pixel_at(1, 1);
     println!("{}", p.x);
+
+    let ppm = canvas.canvas_to_ppm();
+    println!("PPM:\n{}", ppm);
  
     // Tuple Code Sandbox
     let mut p = Projectile {

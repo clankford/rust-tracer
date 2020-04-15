@@ -29,7 +29,9 @@ impl Canvas {
     }
 
     pub fn canvas_to_ppm(&self) -> String {
-        let header = create_ppm_header(self.width, self.height);
+        let mut header = create_ppm_header(self.width, self.height);
+        let body = create_ppm_body(&self.pixels, self.width);
+        header.push_str(&body);
 
         header
     }
@@ -43,6 +45,8 @@ fn create_ppm_header(width: usize, height: usize) -> String {
     format!("P3\n{} {}\n255\n", width, height)
 }
 
+// TODO: Refactor this function
+// TODO: Comment this function
 fn create_ppm_body(pixels: &Vec<Tuple>, width: usize) -> String {
     
     let color_scale: f32 = 255.0;
@@ -77,17 +81,14 @@ fn create_ppm_body(pixels: &Vec<Tuple>, width: usize) -> String {
     for e in trans {
         let mut insert_val: String = "".to_owned();
         let val = format!("{}", e);
-        println!("i_chars + val.len() = {}", i_chars + val.len());
-        // val.len() + 1 - the +1 is to account for the white space that would need to be added
+        // val.len() + 1: the +1 is to account for the white space that would need to be added
         if i_chars + val.len() + 1 > 70 {
-            println!("End of chars");
             insert_val.push_str("\n");
             insert_val.push_str(&val);
             i_chars = 0;
             i_chars = i_chars + val.len();
         }
         else if i_width % (width * 3) == 0 {
-            println!("End of row");
             insert_val.push_str(" ");
             insert_val.push_str(&val);
             insert_val.push_str("\n");
@@ -138,7 +139,7 @@ mod tests {
     #[test]
     fn construct_ppm_header() {
         let c = Canvas::new(5, 3);
-        let ppm = c.canvas_to_ppm();
+        let ppm = create_ppm_header(c.width, c.height);
         assert!(ppm == "P3\n5 3\n255\n", "Result: PPM = \n{}Expected: PPM = \nP3\n5 3\n255", ppm);
     }
 
@@ -163,8 +164,8 @@ mod tests {
     #[test]
     fn construct_ppm_body_line_break() {
         let mut c = Canvas::new(10, 2);
-        let color = Tuple::color(1.0, 0.8, 0.6);
-        c.pixels = vec![color; c.width * c.height];
+        let color_pixels = Tuple::color(1.0, 0.8, 0.6);
+        c.pixels = vec![color_pixels; c.width * c.height];
         let ppm = create_ppm_body(&c.pixels, c.width);
         let row1 = String::from("255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204\n");
         let row2 = String::from("153 255 204 153 255 204 153 255 204 153 255 204 153\n");
@@ -173,5 +174,14 @@ mod tests {
         let exp = row1 + &row2 + &row3 +&row4;
         assert!(ppm == exp,
             "\nResult: PPM = \n{:?}\nExpected: PPM = \n{:?}", ppm, exp);
+    }
+
+    #[test]
+    fn construct_ppm_body_trailing_newline() {
+        let c = Canvas::new(5, 3);
+        let ppm = create_ppm_body(&c.pixels, c.width);
+        let last_char = ppm.chars().last().unwrap();
+        assert!(last_char == '\n',
+            "Result: The last char in the PPM should be a newline, it was a {}", last_char);
     }
 }
