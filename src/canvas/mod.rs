@@ -28,6 +28,7 @@ impl Canvas {
         self.pixels[i] = color
     }
 
+    // TODO: Add ability to draw a canvas to a browser with web assembly.
     pub fn canvas_to_ppm(&self) -> String {
         let mut header = create_ppm_header(self.width, self.height);
         let body = create_ppm_body(&self.pixels, self.width);
@@ -36,8 +37,8 @@ impl Canvas {
         header
     }
 
-    fn get_index(&self, width: usize, height: usize) ->  usize {
-        width * self.height + height
+    fn get_index(&self, x: usize, y: usize) ->  usize {
+        y * self.width + x
     }
 }
 
@@ -123,6 +124,14 @@ mod tests {
         assert!(c.width == 10 && c.height == 20 && length == 200, 
             "Result: width = {}, height = {}, length = {}; 
             Expected: width = 10, height = 20, length = 200", c.width, c.height, length);
+    }
+
+    #[test]
+    fn find_index() {
+        let c = Canvas::new(2, 5);
+        let i = c.get_index(1, 2);
+        assert!(i == 5,
+            "Result: i = {}; Expected: i = 5", i);
     }
 
     #[test]

@@ -2,31 +2,31 @@ mod tuple;
 mod canvas;
 use tuple::Tuple;
 use canvas::Canvas;
+use std::io;
+use std::fs::File;
+use std::io::prelude::*;
 
 // TODO: Convert this to a library project and refactor to have a separate main.rs use that library.
 fn main() {
     
-    // Canvas Code Sandbox
-    let mut canvas = Canvas::new(20, 20);
-    canvas.write_pixel(1, 1, Tuple::color(0.5, 0.5, 0.5));
-    let p = canvas.pixel_at(1, 1);
-    println!("{}", p.x);
+    let start = Tuple::point(0.0, 1.0, 0.0);
+    let velocity = &Tuple::vector(1.0, 1.8, 0.0).norm() * 11.25;
 
-    let ppm = canvas.canvas_to_ppm();
-    println!("PPM:\n{}", ppm);
- 
-    // Tuple Code Sandbox
     let mut p = Projectile {
-        position: Tuple::point(0.0, 1.0, 0.0),
-        velocity: Tuple::vector(1.0, 1.0, 0.0).norm()
+        position: start,
+        velocity: velocity
     };
 
-    println!("{}", p.velocity.y);
+    let gravity = Tuple::vector(0.0, -0.1, 0.0);
+    let wind = Tuple::vector(-0.01, 0.0, 0.0);
 
     let e = Environment {
-        gravity: Tuple::vector(0.0, -0.1, 0.0),
-        wind: Tuple::vector(-0.01, 0.0, 0.0)
+        gravity: gravity,
+        wind: wind
     };
+
+    let mut canvas = Canvas::new(900, 550);
+    let plot_color = Tuple::color(255.0, 0.0, 0.0);
     
     let mut t = 0;
 
@@ -40,9 +40,15 @@ fn main() {
         else {
             p= tick(&e, p);
             t = t + 1;
+            if p.position.x <= (canvas.width - 1) as f32 && p.position.y >= 0.0 {
+                canvas.write_pixel(p.position.x as usize, canvas.height - p.position.y as usize, plot_color);
+            }
             println!("At t: {}, the position of the projectile is: {}, {}, {}.", t, p.position.x, p.position.y, p.position.z);
         }
     }
+
+    let ppm = canvas.canvas_to_ppm();
+    create_ppm_file(ppm).expect("Failed to write image to file.");
 }
 
 // Takes a reference to Environment, as envronment is not modified during the tick function, it is
@@ -65,4 +71,10 @@ struct Projectile {
 struct Environment {
     gravity: Tuple,
     wind: Tuple
+}
+
+fn create_ppm_file(ppm: String) -> io::Result<()> {
+    let mut file = File::create("image.ppm")?;
+    write!(file, "{}", ppm)?;
+    Ok(())
 }
