@@ -1,4 +1,4 @@
-use crate::Tuple;
+use crate::ray_tracer::tuple::Tuple;
 
 pub struct Canvas {
     pub width: usize,

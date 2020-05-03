@@ -1,7 +1,8 @@
-mod tuple;
-mod canvas;
-use tuple::Tuple;
-use canvas::Canvas;
+extern crate rust_tracer;
+use crate::rust_tracer::ray_tracer::canvas::*;
+use crate::rust_tracer::ray_tracer::tuple::*;
+
+
 use std::io;
 use std::fs::File;
 use std::io::prelude::*;
