@@ -7,7 +7,6 @@ use std::io;
 use std::fs::File;
 use std::io::prelude::*;
 
-// TODO: Convert this to a library project and refactor to have a separate main.rs use that library.
 fn main() {
     
     let start = Tuple::point(0.0, 1.0, 0.0);
