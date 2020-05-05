@@ -1,16 +1,8 @@
 use std::ops::{Add,Sub,Neg,Mul,Div};
 use std::cmp::Eq;
 use std::f32;
+use crate::ray_tracer::common::f_equal;
 
-fn f_equal(a: f32, b: f32) -> bool {
-    const EPSILON: f32 = 0.00001;
-    let diff: f32 = a - b;
-    if diff.abs() < EPSILON {
-        true
-    } else {
-        false
-    }
-}
 
 
 // TODO: Is there a way to create Structs for Vector & Point and refactor this module to handle the
@@ -315,27 +307,6 @@ mod tests {
         let green = 0.4;
         let blue = 1.7;
         assert!(red == c.x && green == c.y && blue == c.z, "r = {}, g = {}, b = {}", c.x, c.y, c.z);
-    }
-
-    #[test]
-    fn values_are_equal() {
-        let a: f32 = 1.222225;
-        let b: f32 = 1.222226;
-        let x: bool = f_equal(a, b);
-        assert_eq!(
-            true, x,
-            "The values {} and {} should be equal = true, value was {}", a, b, x
-        )
-    }
-
-    #[test]
-    fn values_are_not_equal() {
-        let a: f32 = 0.00001;
-        let b: f32 = 0.000021;
-        assert_ne!(
-            true, f_equal(a, b),
-            "The values {} and {} should be equal = false, value was {}", a, b, f_equal(a, b)
-        )
     }
 
     #[test]
