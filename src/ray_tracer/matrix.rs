@@ -1,3 +1,5 @@
+use crate::ray_tracer::common::f_equal;
+
 pub struct Matrix {
     // [row][col]
     pub value: Vec<Vec<f32>>
@@ -5,11 +7,34 @@ pub struct Matrix {
 
 impl Matrix {
     pub fn new(value: Vec<Vec<f32>>) -> Matrix {
+        // TODO: Add validation for all inner vectors being the same length.
         Matrix {
             value
         }
     }
 }
+
+// Must overload PartialEq instead of leveraging Derive PartialEq on the Matrix struct. This is
+// because we have a custom implementation for comparing floating point numbers f_equal.
+impl PartialEq for Matrix {
+    fn eq(&self, other: &Matrix) -> bool {
+        // Assumes that all nested vectors are the same length.
+        if (&self.value.len() == &other.value.len()) & (&self.value[0].len() == &other.value[0].len()) {
+            for i in 0..self.value.len() {
+                for j in 0..self.value[i].len() {
+                    if !f_equal(self.value[i][j], other.value[i][j]) {
+                        return false
+                    }
+                }
+            }
+            true
+        } else {
+            false
+        } 
+    }
+}
+
+impl Eq for Matrix {}
 
 #[cfg(test)]
 mod tests {
@@ -52,6 +77,45 @@ mod tests {
         assert!(
             m.value[0][0] == -3.0 && m.value[1][1] == -2.0 && m.value[2][2] == 1.0,
             "The 3x3 matrix was not created correctly."
+        );
+    }
+
+    #[test]
+    fn matricies_are_equal() {
+        let m1 = Matrix::new(vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0]
+        ]);
+        let m2 = Matrix::new(vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0]
+        ]);
+        assert!(
+            m1 == m2,
+            "The matrices are not equal"
+        );
+    }
+    #[test]
+    fn matricies_are_not_equal() {
+        let m1 = Matrix::new(vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0]
+        ]);
+        let m2 = Matrix::new(vec![
+            vec![2.0, 3.0, 4.0, 5.0],
+            vec![6.0, 7.0, 8.0, 9.0],
+            vec![8.0, 7.0, 6.0, 5.0],
+            vec![4.0, 3.0, 2.0, 1.0]
+        ]);
+        assert_eq!(
+            m1 == m2, false,
+            "The matrices are not equal"
         );
     }
 }
