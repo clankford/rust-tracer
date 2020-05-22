@@ -1,4 +1,6 @@
 use crate::ray_tracer::common::f_equal;
+use crate::ray_tracer::tuple::Tuple;
+use std::ops::Mul;
 
 pub struct Matrix {
     // [row][col]
@@ -7,7 +9,7 @@ pub struct Matrix {
 
 impl Matrix {
     pub fn new(value: Vec<Vec<f32>>) -> Matrix {
-        // TODO: Add validation for all inner vectors being the same length.
+        // TODO: Add validation for all inner vectors being the same length. (Panic)
         Matrix {
             value
         }
@@ -33,8 +35,64 @@ impl PartialEq for Matrix {
         } 
     }
 }
-
 impl Eq for Matrix {}
+
+// Only works for 4x4 matrices
+impl Mul for &Matrix {
+    type Output = Matrix;
+
+    fn mul(self, other: &Matrix) -> Matrix {
+        
+        let mut m = Matrix::new(vec![
+            vec![0.0, 0.0, 0.0, 0.0],
+            vec![0.0, 0.0, 0.0, 0.0],
+            vec![0.0, 0.0, 0.0, 0.0],
+            vec![0.0, 0.0, 0.0, 0.0]
+        ]);
+
+        for i in 0..m.value.len() {
+            for j in 0..m.value[i].len() {
+                m.value[i][j] = self.value[i][0] * other.value[0][j] +
+                            self.value[i][1] * other.value[1][j] +
+                            self.value[i][2] * other.value[2][j] +
+                            self.value[i][3] * other.value[3][j];
+            }
+        }
+        m
+    }
+}
+
+// This is super janky. There must be a better way to do this. Only works for 4x4 matrices/
+impl Mul<&Tuple> for &Matrix {
+    type Output = Tuple;
+
+    fn mul(self, other: &Tuple) -> Tuple {
+
+        let w = match other.w {
+            Some(0) => 0.0,
+            Some(1) => 1.0,
+            _ => panic!("This operation can't be performed on a color."),
+        };
+
+        let mut t = Tuple::point(0.0, 0.0, 0.0);
+        for i in 0..self.value.len() {
+            let value = self.value[i][0] * other.x +
+                    self.value[i][1] * other.y +
+                    self.value[i][2] * other.z +
+                    self.value[i][3] * w;
+            
+            match i {
+                0 => t.x = value,
+                1 => t.y = value,
+                2 => t.z = value,
+                3 => t.w = Some(value as u8),
+                _ => panic!("Matrix and Tuple have mismatched sizes.")
+            }
+        }
+        t
+    }
+
+}
 
 #[cfg(test)]
 mod tests {
@@ -115,7 +173,48 @@ mod tests {
         ]);
         assert_eq!(
             m1 == m2, false,
-            "The matrices are not equal"
+            "The matrices are not equal!"
+        );
+    }
+
+    #[test]
+    fn multiply_two_matrices() {
+        let a = Matrix::new(vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![5.0, 6.0, 7.0, 8.0],
+            vec![9.0, 8.0, 7.0, 6.0],
+            vec![5.0, 4.0, 3.0, 2.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![-2.0, 1.0, 2.0, 3.0],
+            vec![3.0, 2.0, 1.0, -1.0],
+            vec![4.0, 3.0, 6.0, 5.0],
+            vec![1.0, 2.0, 7.0, 8.0]
+        ]);
+        let result = Matrix::new(vec![
+            vec![20.0, 22.0, 50.0, 48.0],
+            vec![44.0, 54.0, 114.0, 108.0],
+            vec![40.0, 58.0, 110.0, 102.0],
+            vec![16.0, 26.0, 46.0, 42.0]
+        ]);
+        assert!(
+            &a*&b == result,
+            "The result of multiplying two matricies together is incorrect!"
+        );
+    }
+
+    #[test]
+    fn multiple_tuple_and_matrix() {
+        let a = Matrix::new(vec![
+            vec![1.0, 2.0, 3.0, 4.0],
+            vec![2.0, 4.0, 4.0, 2.0],
+            vec![8.0, 6.0, 4.0, 1.0],
+            vec![0.0, 0.0, 0.0, 1.0]
+        ]);
+        let b = Tuple::point(1.0, 2.0, 3.0);
+        let result = Tuple::point(18.0, 24.0, 33.0);
+        assert!(
+            &a*&b == result
         );
     }
 }
