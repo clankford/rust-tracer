@@ -14,6 +14,15 @@ impl Matrix {
             value
         }
     }
+
+    pub fn identity() -> Matrix {
+        Matrix::new(vec![
+            vec![1.0, 0.0, 0.0, 0.0],
+            vec![0.0, 1.0, 0.0, 0.0],
+            vec![0.0, 0.0, 1.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0]
+        ])
+    }
 }
 
 // Must overload PartialEq instead of leveraging Derive PartialEq on the Matrix struct. This is
@@ -198,13 +207,13 @@ mod tests {
             vec![16.0, 26.0, 46.0, 42.0]
         ]);
         assert!(
-            &a*&b == result,
+            &a * &b == result,
             "The result of multiplying two matricies together is incorrect!"
         );
     }
 
     #[test]
-    fn multiple_tuple_and_matrix() {
+    fn multiply_tuple_and_matrix() {
         let a = Matrix::new(vec![
             vec![1.0, 2.0, 3.0, 4.0],
             vec![2.0, 4.0, 4.0, 2.0],
@@ -214,7 +223,31 @@ mod tests {
         let b = Tuple::point(1.0, 2.0, 3.0);
         let result = Tuple::point(18.0, 24.0, 33.0);
         assert!(
-            &a*&b == result
+            &a * &b == result,
+            "The result of multiplying a matrix and a tuple together is incorrect!"
+        );
+    }
+
+    #[test]
+    fn multiply_matrix_by_identity_matrix() {
+        let a = Matrix::new(vec![
+            vec![0.0, 1.0, 2.0, 4.0],
+            vec![1.0, 2.0, 4.0, 8.0],
+            vec![2.0, 4.0, 8.0, 16.0],
+            vec![4.0, 8.0, 16.0, 32.0]
+        ]);
+        assert!(
+            &a * &Matrix::identity() == a,
+            "The result of multiplying by the identify matrix should be the original matrix!"
+        );
+    }
+
+    #[test]
+    fn multiple_tuple_by_identity() {
+        let a = Tuple::point(1.0, 2.0, 3.0);
+        assert!(
+            &Matrix::identity() * &a == a,
+            "The result of multiplying a tuple by the identify matrix should be the original tuple!"
         );
     }
 }
