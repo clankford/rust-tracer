@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::prelude::*;
 
 fn main() {
-    
+
     let start = Tuple::point(0.0, 1.0, 0.0);
     let velocity = &Tuple::vector(1.0, 1.8, 0.0).norm() * 11.25;
 

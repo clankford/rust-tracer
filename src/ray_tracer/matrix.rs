@@ -23,6 +23,17 @@ impl Matrix {
             vec![0.0, 0.0, 0.0, 1.0]
         ])
     }
+
+    pub fn transpose(mut self) -> Matrix {
+        for i in 0..self.value.len() {
+            for j in i..self.value.len() {
+                let temp = self.value[j][i];
+                self.value[j][i] = self.value[i][j];
+                self.value[i][j] = temp;
+            }
+        }
+        self
+    }
 }
 
 // Must overload PartialEq instead of leveraging Derive PartialEq on the Matrix struct. This is
@@ -248,6 +259,34 @@ mod tests {
         assert!(
             &Matrix::identity() * &a == a,
             "The result of multiplying a tuple by the identify matrix should be the original tuple!"
+        );
+    }
+
+    #[test]
+    fn transpose_matrix() {
+        let a = Matrix::new(vec![
+            vec![0.0, 9.0, 3.0, 0.0],
+            vec![9.0, 8.0, 0.0, 8.0],
+            vec![1.0, 8.0, 5.0, 3.0],
+            vec![0.0, 0.0, 5.0, 8.0]
+        ]);
+        let result = Matrix::new(vec![
+            vec![0.0, 9.0, 1.0, 0.0],
+            vec![9.0, 8.0, 8.0, 0.0],
+            vec![3.0, 0.0, 5.0, 5.0],
+            vec![0.0, 8.0, 3.0, 8.0]
+        ]);
+        assert!(
+            a.transpose() == result,
+            "The result of the matrix transpose is not correct!"
+        );
+    }
+
+    #[test]
+    fn transpose_identity_matrix() {
+        assert!(
+            &Matrix::identity().transpose() == &Matrix::identity(),
+            "The result of the matrix transpose is not correct!"
         );
     }
 }
