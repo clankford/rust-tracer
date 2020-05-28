@@ -134,7 +134,6 @@ fn determinant(matrix: &Matrix) -> f32 {
         _ => panic!("Can only take the determinant of 2x2, 3x3, or 4x4 matrices."),
     }
 }
-    
 
 // Takes in a reference to a matrix and clones it internally to return a new submatrix.
 fn submatrix(matrix: &Matrix, row: usize, col: usize) -> Matrix {
