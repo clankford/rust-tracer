@@ -2,6 +2,7 @@ use crate::ray_tracer::common::f_equal;
 use crate::ray_tracer::tuple::Tuple;
 use std::ops::Mul;
 
+#[derive(Clone)]
 pub struct Matrix {
     // [row][col]
     pub value: Vec<Vec<f32>>
@@ -33,6 +34,10 @@ impl Matrix {
             }
         }
         self
+    }
+
+    pub fn determinant(&self) -> f32 {
+        determinant(&self)
     }
 }
 
@@ -111,7 +116,47 @@ impl Mul<&Tuple> for &Matrix {
         }
         t
     }
+}
 
+fn determinant(matrix: &Matrix) -> f32 {
+    // TODO: May not need to take in a reference
+    // Assumes the matrix will always be square
+    let dim = matrix.value.len();
+    match dim {
+        2 => matrix.value[0][0] * matrix.value[1][1] - matrix.value[0][1] * matrix.value[1][0],
+        3 | 4 => {
+            let mut det = 0.0;
+            for i in 0..matrix.value.len() {
+                det = det + matrix.value[0][i] * cofactor(&matrix, 0, i);
+            }
+            det
+        },
+        _ => panic!("Can only take the determinant of 2x2, 3x3, or 4x4 matrices."),
+    }
+}
+    
+
+// Takes in a reference to a matrix and clones it internally to return a new submatrix.
+fn submatrix(matrix: &Matrix, row: usize, col: usize) -> Matrix {
+    // TODO: May not need to take in a reference
+    let mut sub = matrix.clone();
+    sub.value.remove(row);
+    for i in 0..sub.value.len() {
+        sub.value[i].remove(col);
+    }
+    sub
+}
+
+fn minor(matrix: &Matrix, row: usize, col: usize) -> f32 {    
+    determinant(&submatrix(&matrix, row, col))
+}
+
+fn cofactor(matrix: &Matrix, row: usize, col: usize) -> f32 {
+    if (row + col) % 2 == 0 {
+        minor(&matrix, row, col)
+    } else {
+        -minor(&matrix, row, col)
+    }
 }
 
 #[cfg(test)]
@@ -287,6 +332,112 @@ mod tests {
         assert!(
             &Matrix::identity().transpose() == &Matrix::identity(),
             "The result of the matrix transpose is not correct!"
+        );
+    }
+
+    #[test]
+    fn determinant_of_2x2() {
+        let a = Matrix::new(vec![
+            vec![1.0, 5.0],
+            vec![-3.0, 2.0]
+        ]);
+        let result = determinant(&a);
+        assert!(
+            f_equal(result, 17.0),
+            "The determinant should be 17, instead the result was {}", result
+        );
+    }
+
+    #[test]
+    fn determinant_of_3x3() {
+        let a = Matrix::new(vec![
+            vec![1.0, 2.0, 6.0],
+            vec![-5.0, 8.0, -4.0],
+            vec![2.0, 6.0, 4.0]
+        ]);
+        let result = determinant(&a);
+        assert!(
+            f_equal(result, -196.0),
+            "The determinant should be -196, instead the result was {}", result
+        );
+    }
+
+    #[test]
+    fn determinant_of_4x4() {
+        let a = Matrix::new(vec![
+            vec![-2.0, -8.0, 3.0, 5.0],
+            vec![-3.0, 1.0, 7.0, 3.0],
+            vec![1.0, 2.0, -9.0, 6.0],
+            vec![-6.0, 7.0, 7.0, -9.0]
+        ]);
+        let result = determinant(&a);
+        assert!(
+            f_equal(result, -4071.0),
+            "The determinant should be -4071, instead the result was {}", result
+        );
+    }
+
+    #[test]
+    fn submatrix_of_3x3() {
+        let a = Matrix::new(vec![
+            vec![1.0, 5.0, 0.0],
+            vec![-3.0, 2.0, 7.0],
+            vec![0.0, 6.0, -3.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![-3.0, 2.0],
+            vec![0.0, 6.0]
+        ]);
+        assert!(
+            submatrix(&a, 0, 2) == b,
+            "The submatrix of the 3x3 matrix is not correct!"
+        );
+    }
+
+    #[test]
+    fn submatrix_of_4x4() {
+        let a = Matrix::new(vec![
+            vec![-6.0, 1.0, 1.0, 6.0],
+            vec![-8.0, 5.0, 8.0, 6.0],
+            vec![-1.0, 0.0, 8.0, 2.0],
+            vec![-7.0, 1.0, -1.0, 1.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![-6.0, 1.0, 6.0],
+            vec![-8.0, 8.0, 6.0],
+            vec![-7.0, -1.0, 1.0]
+        ]);
+        assert!(
+            submatrix(&a, 2, 1) == b,
+            "The submatrix of the 4x4 matrix is not correct!"
+        );
+    }
+
+    #[test]
+    fn minor_of_3x3() {
+        let a = Matrix::new(vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0]
+        ]);
+        let result = minor(&a, 1, 0);
+        assert!(
+            f_equal(result, 25.0),
+            "The minor should be 25, instead the result was {}", result
+        );
+    }
+
+    #[test]
+    fn cofactor_of_3x3() {
+        let a = Matrix::new(vec![
+            vec![3.0, 5.0, 0.0],
+            vec![2.0, -1.0, -7.0],
+            vec![6.0, -1.0, 5.0]
+        ]);
+        let result = cofactor(&a, 1, 0);
+        assert!(
+            f_equal(result, -25.0),
+            "The cofactor should be -25, instead the result was {}", result
         );
     }
 }
