@@ -39,6 +39,29 @@ impl Matrix {
     pub fn determinant(&self) -> f32 {
         determinant(&self)
     }
+
+    pub fn inverse(&self) -> Matrix {
+        if !self.is_invertible() {
+            panic!("The matrix is not invertible!");
+        }
+
+        let mut m = self.clone();
+        let d = self.determinant();
+
+        for i in 0..self.value.len() {
+            for j in 0..self.value[i].len() {
+                let c = cofactor(self, i, j);
+                m.value[j][i] = c / d;
+            }
+        }
+
+        m
+    }
+
+    // This might not need to be on the matrix's public API
+    fn is_invertible(&self) -> bool {
+        !f_equal(self.determinant(), 0.0) 
+    }
 }
 
 // Must overload PartialEq instead of leveraging Derive PartialEq on the Matrix struct. This is
@@ -62,18 +85,12 @@ impl PartialEq for Matrix {
 }
 impl Eq for Matrix {}
 
-// Only works for 4x4 matrices
 impl Mul for &Matrix {
     type Output = Matrix;
 
     fn mul(self, other: &Matrix) -> Matrix {
         
-        let mut m = Matrix::new(vec![
-            vec![0.0, 0.0, 0.0, 0.0],
-            vec![0.0, 0.0, 0.0, 0.0],
-            vec![0.0, 0.0, 0.0, 0.0],
-            vec![0.0, 0.0, 0.0, 0.0]
-        ]);
+        let mut m = self.clone();
 
         for i in 0..m.value.len() {
             for j in 0..m.value[i].len() {
@@ -119,7 +136,6 @@ impl Mul<&Tuple> for &Matrix {
 }
 
 fn determinant(matrix: &Matrix) -> f32 {
-    // TODO: May not need to take in a reference
     // Assumes the matrix will always be square
     let dim = matrix.value.len();
     match dim {
@@ -137,7 +153,6 @@ fn determinant(matrix: &Matrix) -> f32 {
 
 // Takes in a reference to a matrix and clones it internally to return a new submatrix.
 fn submatrix(matrix: &Matrix, row: usize, col: usize) -> Matrix {
-    // TODO: May not need to take in a reference
     let mut sub = matrix.clone();
     sub.value.remove(row);
     for i in 0..sub.value.len() {
@@ -437,6 +452,115 @@ mod tests {
         assert!(
             f_equal(result, -25.0),
             "The cofactor should be -25, instead the result was {}", result
+        );
+    }
+
+    #[test]
+    fn matrix_is_invertible() {
+        let a = Matrix::new(vec![
+            vec![6.0, 4.0, 4.0, 4.0],
+            vec![5.0, 5.0, 7.0, 6.0],
+            vec![4.0, -9.0, 3.0, -7.0],
+            vec![9.0, 1.0, 7.0, -6.0]
+        ]);
+        assert!(
+            a.is_invertible(),
+            "The matrix should be invertible, but isn't."
+        );
+    }
+
+    #[test]
+    fn matrix_is_not_invertible() {
+        let a = Matrix::new(vec![
+            vec![-4.0, 2.0, -2.0, -3.0],
+            vec![9.0, 6.0, 2.0, 6.0],
+            vec![0.0, -5.0, 1.0, -5.0],
+            vec![0.0, 0.0, 0.0, 0.0]
+        ]);
+        assert!(
+            !a.is_invertible(),
+            "The matrix should not be invertible, but is."
+        );
+    }
+
+    #[test]
+    fn inverse_4x4_matrix_1() {
+        let a = Matrix::new(vec![
+            vec![-5.0, 2.0, 6.0, -8.0],
+            vec![1.0, -5.0, 1.0, 8.0],
+            vec![7.0, 7.0, -6.0, -7.0],
+            vec![1.0, -3.0, 7.0, 4.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![0.21805, 0.45113, 0.24060, -0.04511],
+            vec![-0.80827, -1.45677, -0.44361, 0.52068],
+            vec![-0.07895, -0.22368, -0.05263, 0.19737],
+            vec![-0.52256, -0.81391, -0.30075, 0.30639]
+        ]);
+        assert!(
+            a.inverse() == b,
+            "The inverse of the 4x4 matrix is not correct!"
+        );
+    }
+
+    #[test]
+    fn inverse_4x4_matrix_2() {
+        let a = Matrix::new(vec![
+            vec![8.0, -5.0, 9.0, 2.0],
+            vec![7.0, 5.0, 6.0, 1.0],
+            vec![-6.0, 0.0, 9.0, 6.0],
+            vec![-3.0, 0.0, -9.0, -4.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![-0.15385, -0.15385, -0.28205, -0.53846],
+            vec![-0.07692, 0.12308, 0.02564, 0.03077],
+            vec![0.35897, 0.35897, 0.43590, 0.92308],
+            vec![-0.69231, -0.69231, -0.76923, -1.92308]
+        ]);
+        assert!(
+            a.inverse() == b,
+            "The inverse of the 4x4 matrix is not correct!"
+        );
+    }
+
+    #[test]
+    fn inverse_4x4_matrix_3() {
+        let a = Matrix::new(vec![
+            vec![9.0, 3.0, 0.0, 9.0],
+            vec![-5.0, -2.0, -6.0, -3.0],
+            vec![-4.0, 9.0, 6.0, 4.0],
+            vec![-7.0, 6.0, 6.0, 2.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![-0.04074, -0.07778, 0.14444, -0.22222],
+            vec![-0.07778, 0.03333, 0.36667, -0.33333],
+            vec![-0.02901, -0.14630, -0.10926, 0.12963],
+            vec![0.17778, 0.06667, -0.26667, 0.33333]
+        ]);
+        assert!(
+            a.inverse() == b,
+            "The inverse of the 4x4 matrix is not correct!"
+        );
+    }
+    
+    #[test]
+    fn multiply_by_inverse() {
+        let a = Matrix::new(vec![
+            vec![3.0, -9.0, 7.0, 3.0],
+            vec![3.0, -8.0, 2.0, -9.0],
+            vec![-4.0, 4.0, 4.0, 1.0],
+            vec![-6.0, 5.0, -1.0, 1.0]
+        ]);
+        let b = Matrix::new(vec![
+            vec![8.0, 2.0, 2.0, 2.0],
+            vec![3.0, -1.0, 7.0, 0.0],
+            vec![7.0, 0.0, 5.0, 4.0],
+            vec![6.0, -2.0, 0.0, 5.0]
+        ]);
+        let c = &a * &b;
+        assert!(
+            &c * &b.inverse() == a,
+            "Multiplying by the inverse failed to produce the right result!"
         );
     }
 }
