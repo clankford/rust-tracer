@@ -15,12 +15,22 @@ impl Matrix {
             value
         }
     }
-
+    
+    // TODO: Maybe turn identity & translaction into a single function that takes an enum.
     pub fn identity() -> Matrix {
         Matrix::new(vec![
             vec![1.0, 0.0, 0.0, 0.0],
             vec![0.0, 1.0, 0.0, 0.0],
             vec![0.0, 0.0, 1.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0]
+        ])
+    }
+    // TODO: Maybe turn identity & translaction into a single function that takes an enum.
+    pub fn translation(x: f32, y: f32, z: f32) -> Matrix {
+        Matrix::new(vec![
+            vec![1.0, 0.0, 0.0, x],
+            vec![0.0, 1.0, 0.0, y],
+            vec![0.0, 0.0, 1.0, z],
             vec![0.0, 0.0, 0.0, 1.0]
         ])
     }
@@ -563,4 +573,39 @@ mod tests {
             "Multiplying by the inverse failed to produce the right result!"
         );
     }
-}
+
+    #[test]
+    fn multiply_point_by_translation_matrix() {
+        let t = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Tuple::point(-3.0, 4.0, 5.0);
+        let result = &t * &p;
+        let expected = Tuple::point(2.0, 1.0, 7.0);
+        assert!(
+            result == expected,
+            "Multiplying the point by the translation matrix resulted in: {:#?}, the expected output was: {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn multiply_point_by_inverse_of_translation_matrix() {
+        let t = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Tuple::point(-3.0, 4.0, 5.0);
+        let result = &t.inverse() * &p;
+        let expected = Tuple::point(-8.0, 7.0, 3.0);
+        assert!(
+            result == expected,
+            "Multiplying the point by the inverse of the translation matrix resulted in: {:#?}, the expected output was: {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn multiple_vector_by_translation_matrix() {
+        let t = Matrix::translation(5.0, -3.0, 2.0);
+        let v = Tuple::vector(-3.0, 4.0, 5.0);
+        let result = &t * &v;
+        assert!(
+            result == v,
+            "Multiplying a vector by a translation matrix resulted in: {:#?}, the expected output was: {:#?}", result, v
+        );
+    }
+} 
