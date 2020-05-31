@@ -16,7 +16,7 @@ impl Matrix {
         }
     }
     
-    // TODO: Maybe turn identity & translaction into a single function that takes an enum.
+    // TODO: Maybe turn these functions that output a matrix into a single function that takes an enum.
     pub fn identity() -> Matrix {
         Matrix::new(vec![
             vec![1.0, 0.0, 0.0, 0.0],
@@ -25,12 +25,20 @@ impl Matrix {
             vec![0.0, 0.0, 0.0, 1.0]
         ])
     }
-    // TODO: Maybe turn identity & translaction into a single function that takes an enum.
     pub fn translation(x: f32, y: f32, z: f32) -> Matrix {
         Matrix::new(vec![
             vec![1.0, 0.0, 0.0, x],
             vec![0.0, 1.0, 0.0, y],
             vec![0.0, 0.0, 1.0, z],
+            vec![0.0, 0.0, 0.0, 1.0]
+        ])
+    }
+
+    pub fn scaling(x: f32, y: f32, z: f32) -> Matrix {
+        Matrix::new(vec![
+            vec![x, 0.0, 0.0, 0.0],
+            vec![0.0, y, 0.0, 0.0],
+            vec![0.0, 0.0, z, 0.0],
             vec![0.0, 0.0, 0.0, 1.0]
         ])
     }
@@ -599,13 +607,61 @@ mod tests {
     }
 
     #[test]
-    fn multiple_vector_by_translation_matrix() {
+    fn multiply_vector_by_translation_matrix() {
         let t = Matrix::translation(5.0, -3.0, 2.0);
         let v = Tuple::vector(-3.0, 4.0, 5.0);
         let result = &t * &v;
         assert!(
             result == v,
             "Multiplying a vector by a translation matrix resulted in: {:#?}, the expected output was: {:#?}", result, v
+        );
+    }
+
+    #[test]
+    fn multiply_point_by_scaling_matrix() {
+        let s = Matrix::scaling(2.0, 3.0, 4.0);
+        let p = Tuple::point(-4.0, 6.0, 8.0);
+        let result = &s * &p;
+        let expected = Tuple::point(-8.0, 18.0, 32.0);
+        assert!(
+            result == expected,
+            "Multiplying the point by the scaling matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn multiply_vector_by_scaling_matrix() {
+        let s = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Tuple::vector(-4.0, 6.0, 8.0);
+        let result = &s * &v;
+        let expected = Tuple::vector(-8.0, 18.0, 32.0);
+        assert!(
+            result == expected,
+            "Multiplying the vector by the scaling matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn multiply_vector_by_inverse_of_scaling_matrix() {
+        let s = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Tuple::vector(-4.0, 6.0, 8.0);
+        let result = &s.inverse() * &v;
+        let expected = Tuple::vector(-2.0, 2.0, 2.0);
+        assert!(
+            result == expected,
+            "Multiplying the vector by the inverse of the scaling matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn multiply_point_by_scaling_matrix_for_reflection() {
+        let s = Matrix::scaling(-1.0, 1.0, 1.0);
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let result = &s * &p;
+        let expected = Tuple::point(-2.0, 3.0, 4.0);
+        assert!(
+            result == expected,
+            "Multiplying the point by the scaling matrix to reflect on the x axis resulted in {:#?}, the expected output was {:#?}", result, expected
         );
     }
 } 
