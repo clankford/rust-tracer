@@ -1,11 +1,18 @@
 use crate::ray_tracer::common::f_equal;
 use crate::ray_tracer::tuple::Tuple;
 use std::ops::Mul;
+use std::f32;
 
 #[derive(Clone)]
 pub struct Matrix {
     // [row][col]
     pub value: Vec<Vec<f32>>
+}
+
+pub enum RotationAxis {
+    X,
+    Y,
+    Z
 }
 
 impl Matrix {
@@ -25,6 +32,7 @@ impl Matrix {
             vec![0.0, 0.0, 0.0, 1.0]
         ])
     }
+
     pub fn translation(x: f32, y: f32, z: f32) -> Matrix {
         Matrix::new(vec![
             vec![1.0, 0.0, 0.0, x],
@@ -41,6 +49,43 @@ impl Matrix {
             vec![0.0, 0.0, z, 0.0],
             vec![0.0, 0.0, 0.0, 1.0]
         ])
+    }
+
+    pub fn shearing(xy: f32, xz: f32, yx: f32, yz: f32, zx: f32, zy: f32) -> Matrix {
+        Matrix::new(vec![
+            vec![1.0, xy, xz, 0.0],
+            vec![yx, 1.0, yz, 0.0],
+            vec![zx, zy, 1.0, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0]
+        ])
+    }
+
+    pub fn rotation(radians: f32, axis: RotationAxis) -> Matrix {
+        match axis {
+            RotationAxis::X => {
+                Matrix::new(vec![
+                    vec![1.0, 0.0, 0.0, 0.0],
+                    vec![0.0, radians.cos(), -radians.sin(), 0.0],
+                    vec![0.0, radians.sin(), radians.cos(), 0.0],
+                    vec![0.0, 0.0, 0.0, 1.0]
+            ])}
+            RotationAxis::Y => {
+                Matrix::new(vec![
+                    vec![radians.cos(), 0.0, radians.sin(), 0.0],
+                    vec![0.0, 1.0, 0.0, 0.0],
+                    vec![-radians.sin(), 0.0, radians.cos(), 0.0],
+                    vec![0.0, 0.0, 0.0, 1.0]
+                ])
+            },
+            RotationAxis::Z => {
+                Matrix::new(vec![
+                    vec![radians.cos(), -radians.sin(), 0.0, 0.0],
+                    vec![radians.sin(), radians.cos(), 0.0, 0.0],
+                    vec![0.0, 0.0, 1.0, 0.0],
+                    vec![0.0, 0.0, 0.0, 1.0]
+                ])
+            },
+        }
     }
 
     pub fn transpose(mut self) -> Matrix {
@@ -662,6 +707,141 @@ mod tests {
         assert!(
             result == expected,
             "Multiplying the point by the scaling matrix to reflect on the x axis resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn rotate_point_around_x_axis() {
+        let p = Tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation(std::f32::consts::PI/4.0, RotationAxis::X);
+        let full_quarter = Matrix::rotation(std::f32::consts::PI/2.0, RotationAxis::X);
+        let result_half_quarter = &half_quarter * &p;
+        let expected_half_quarter = Tuple::point(0.0, 2.0_f32.sqrt()/2.0, 2.0_f32.sqrt()/2.0);
+        let result_full_quarter = &full_quarter * &p;
+        let expected_full_quarter = Tuple::point(0.0, 0.0, 1.0);
+        assert!(
+            (result_half_quarter == expected_half_quarter) &&
+            (result_full_quarter == expected_full_quarter),
+            "Half quarter rotation expected: {:#?}, half quarter rotation result: {:#?}\n\nFull quarter rotation expected: 
+            {:#?}, full quarter rotation result: {:#?}", expected_half_quarter, result_half_quarter, expected_full_quarter, result_full_quarter
+        );
+    }
+
+    #[test]
+    fn inverse_of_rotation_on_x_axis() {
+        let p = Tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation(std::f32::consts::PI/4.0, RotationAxis::X);
+        let result = &half_quarter.inverse() * &p;
+        let expected = Tuple::point(0.0, 2.0_f32.sqrt()/2.0, -2.0_f32.sqrt()/2.0);
+        assert!(
+            result == expected,
+            "The inverse of the rotation of the point resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn rotate_point_around_y_axis() {
+        let p = Tuple::point(0.0, 0.0, 1.0);
+        let half_quarter = Matrix::rotation(std::f32::consts::PI/4.0, RotationAxis::Y);
+        let full_quarter = Matrix::rotation(std::f32::consts::PI/2.0, RotationAxis::Y);
+        let result_half_quarter = &half_quarter * &p;
+        let expected_half_quarter = Tuple::point(2.0_f32.sqrt()/2.0, 0.0, 2.0_f32.sqrt()/2.0);
+        let result_full_quarter = &full_quarter * &p;
+        let expected_full_quarter = Tuple::point(1.0, 0.0, 0.0);
+        assert!(
+            (result_half_quarter == expected_half_quarter) &&
+            (result_full_quarter == expected_full_quarter),
+            "Half quarter rotation expected: {:#?}, half quarter rotation result: {:#?}\n\nFull quarter rotation expected: 
+            {:#?}, full quarter rotation result: {:#?}", expected_half_quarter, result_half_quarter, expected_full_quarter, result_full_quarter
+        );
+    }
+
+    #[test]
+    fn rotate_point_around_z_axis() {
+        let p = Tuple::point(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation(std::f32::consts::PI/4.0, RotationAxis::Z);
+        let full_quarter = Matrix::rotation(std::f32::consts::PI/2.0, RotationAxis::Z);
+        let result_half_quarter = &half_quarter * &p;
+        let expected_half_quarter = Tuple::point(-2.0_f32.sqrt()/2.0, 2.0_f32.sqrt()/2.0, 0.0);
+        let result_full_quarter = &full_quarter * &p;
+        let expected_full_quarter = Tuple::point(-1.0, 0.0, 0.0);
+        assert!(
+            (result_half_quarter == expected_half_quarter) &&
+            (result_full_quarter == expected_full_quarter),
+            "Half quarter rotation expected: {:#?}, half quarter rotation result: {:#?}\n\nFull quarter rotation expected: 
+            {:#?}, full quarter rotation result: {:#?}", expected_half_quarter, result_half_quarter, expected_full_quarter, result_full_quarter
+        );
+    }
+
+    #[test]
+    fn shear_in_x_as_proportion_to_y() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let result = &s * &p;
+        let expected = Tuple::point(5.0, 3.0, 4.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn shear_in_x_as_proportion_to_z() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let result = &s * &p;
+        let expected = Tuple::point(6.0, 3.0, 4.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn shear_in_y_as_proportion_to_x() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let result = &s * &p;
+        let expected = Tuple::point(2.0, 5.0, 4.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn shear_in_y_as_proportion_to_z() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let result = &s * &p;
+        let expected = Tuple::point(2.0, 7.0, 4.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn shear_in_z_as_proportion_to_x() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let result = &s * &p;
+        let expected = Tuple::point(2.0, 3.0, 6.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn shear_in_z_as_proportion_to_y() {
+        let p = Tuple::point(2.0, 3.0, 4.0);
+        let s = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let result = &s * &p;
+        let expected = Tuple::point(2.0, 3.0, 7.0);
+        assert!(
+            result == expected,
+            "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
         );
     }
 } 
