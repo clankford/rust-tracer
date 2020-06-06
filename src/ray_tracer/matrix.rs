@@ -15,6 +15,7 @@ pub enum RotationAxis {
     Z
 }
 
+// TODO: Add fluent API for matrix transformations
 impl Matrix {
     pub fn new(value: Vec<Vec<f32>>) -> Matrix {
         // TODO: Add validation for all inner vectors being the same length. (Panic)
@@ -842,6 +843,21 @@ mod tests {
         assert!(
             result == expected,
             "Shearing the point by the matrix resulted in {:#?}, the expected output was {:#?}", result, expected
+        );
+    }
+
+    #[test]
+    fn chained_transformations() {
+        let p = Tuple::point(1.0, 0.0, 1.0);
+        let a = Matrix::rotation(std::f32::consts::PI/2.0, RotationAxis::X);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+        // This is gross
+        let result = &(&(&c * &b) * &a) * &p;
+        let expected = Tuple::point(15.0, 0.0, 7.0);
+        assert!(
+            result == expected,
+            "Transforming the point by the series of transformations resulted in {:#?}, the expected output was {:#?}", result, expected
         );
     }
 } 
