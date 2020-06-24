@@ -1,6 +1,7 @@
 use crate::ray_tracer::tuple::Tuple;
 use crate::ray_tracer::sphere::Sphere;
 use crate::ray_tracer::intersection::Intersection;
+use crate::ray_tracer::matrix::Matrix;
 
 #[cfg(test)]
 use crate::ray_tracer::traits::object::Object;
@@ -15,30 +16,37 @@ pub struct Ray {
 
 impl Ray {
     //TODO: If I can't get stronger types on origin and direction then I should add validation here.
-    pub fn new(origin: Tuple, direction: Tuple) -> Ray {
+    pub fn new(origin: Tuple, direction: Tuple) -> Self {
         Ray {
             origin,
             direction
         }
     }
 
-    // Returns the position of along a ray at time t.
+    // Returns the position along a ray at time t.
     pub fn position(&self, t: f32) -> Tuple {
         &self.origin + &(&self.direction * t)
     }
+
+    pub fn transform(&self, m: Matrix) -> Ray {
+        Ray {
+            origin: &m * &self.origin,
+            direction: &m * &self.direction
+        }        
+    }
 }
 
-impl <'a> Ray {
+impl <'a,'b> Ray {
 
     // Returns an Option so that None can be returned if the ray does not intersect with the sphere
     // Returns None if the ray does not intersect with the object and returns a vector of intersections
     // if there is an intersection with the object.
-    pub fn intersect(r: Ray, s: &'a Sphere) -> Option<Vec<Intersection<'a, Sphere>>> { 
+    pub fn intersect(&self, s: &'a Sphere) -> Option<Vec<Intersection<'a, Sphere>>> { 
         // Yields the vector from the sphere's origin to the ray's origin
-        let sphere_to_ray = &r.origin - &s.origin;
+        let sphere_to_ray = &self.origin - &s.origin;
         // Dot product of the ray direction on itself
-        let a = &r.direction * &r.direction;
-        let b = 2.0 * (&r.direction * &sphere_to_ray);
+        let a = &self.direction * &self.direction;
+        let b = 2.0 * (&self.direction * &sphere_to_ray);
         let c = (&sphere_to_ray * &sphere_to_ray) - 1.0;
         let discriminant = b.powi(2) - 4.0 * a * c;
 
@@ -55,7 +63,7 @@ impl <'a> Ray {
     }
 
     // Returns the closest positive intersection to the Ray's origin.
-    pub fn hit<'b>(is: &'b Vec<Intersection<'a, Sphere>>) -> Option<&'b Intersection<'a, Sphere>> {
+    pub fn hit(is: &'b Vec<Intersection<'a, Sphere>>) -> Option<&'b Intersection<'a, Sphere>> {
         let mut closest = &is[0];
         for i in 1..is.len() {
             if closest.t < 0.0 && is[i].t >= 0.0 {
@@ -110,7 +118,7 @@ mod tests {
     fn compute_ray_sphere_intersect() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s).unwrap();
+        let result = r.intersect(&s).unwrap();
         let expected = vec![Intersection::new(4.0, &s), Intersection::new(6.0, &s)];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
@@ -122,7 +130,7 @@ mod tests {
     fn compute_ray_sphere_tangent_intersect() {
         let r = Ray::new(Tuple::point(0.0, 1.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s).unwrap();
+        let result = r.intersect(&s).unwrap();
         let expected = vec![Intersection::new(5.0, &s), Intersection::new(5.0, &s)];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
@@ -134,7 +142,7 @@ mod tests {
     fn compute_no_ray_sphere_intersect() {
         let r = Ray::new(Tuple::point(0.0, 2.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s);
+        let result = r.intersect(&s);
         assert!(
             result.is_none(),
             "The result was not None, meaning there was an intersection found when there isn't supposed to be an intersection."
@@ -145,7 +153,7 @@ mod tests {
     fn compute_ray_originating_in_sphere_interesect() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s).unwrap();
+        let result = r.intersect(&s).unwrap();
         let expected = vec![Intersection::new(-1.0, &s), Intersection::new(1.0, &s)];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
@@ -157,7 +165,7 @@ mod tests {
     fn compute_sphere_behind_ray_intersect() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s).unwrap();
+        let result = r.intersect(&s).unwrap();
         let expected = vec![Intersection::new(-6.0, &s), Intersection::new(-4.0, &s)];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
@@ -169,7 +177,7 @@ mod tests {
     fn intersect_sets_object_on_intersection() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        let result = Ray::intersect(r, &s).unwrap();
+        let result = r.intersect(&s).unwrap();
         let expected = &s;
         assert!(
             result[0].object == expected,
@@ -231,6 +239,32 @@ mod tests {
         assert!(
             result.t == expected.t,
             "The expected intersection was not returned."
+        )
+    }
+
+    #[test]
+    fn translate_ray() {
+        let r = Ray::new(Tuple::point(1.0, 2.0, 3.0), Tuple::vector(0.0, 1.0, 0.0));
+        let m = Matrix::translation(3.0, 4.0, 5.0);
+        let result = r.transform(m);
+        let expected_origin = Tuple::point(4.0, 6.0, 8.0);
+        let expected_direction = Tuple::vector(0.0, 1.0, 0.0);
+        assert!(
+            result.origin == expected_origin && result.direction == expected_direction,
+            "The ray was not translated correctly."
+        )
+    }
+
+    #[test]
+    fn scale_ray() {
+        let r = Ray::new(Tuple::point(1.0, 2.0, 3.0), Tuple::vector(0.0, 1.0, 0.0));
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let result = r.transform(m);
+        let expected_origin = Tuple::point(2.0, 6.0, 12.0);
+        let expected_direction = Tuple::vector(0.0, 3.0, 0.0);
+        assert!(
+            result.origin == expected_origin && result.direction == expected_direction,
+            "The ray was not scaled correctly."
         )
     }
 }
