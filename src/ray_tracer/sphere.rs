@@ -17,6 +17,16 @@ impl Object for Sphere {
     }
 }
 
+// There are instances where I want to instantiate a sphere with some but not all default values.
+impl Default for Sphere {
+    fn default() -> Self {
+        Sphere {
+            origin: Tuple::point(0.0, 0.0, 0.0),
+            transform: Matrix::identity() 
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -28,6 +28,7 @@ impl Ray {
         &self.origin + &(&self.direction * t)
     }
 
+    // Transforms a Ray by a transformation Matrix.
     pub fn transform(&self, m: Matrix) -> Ray {
         Ray {
             origin: &m * &self.origin,
@@ -42,11 +43,14 @@ impl <'a,'b> Ray {
     // Returns None if the ray does not intersect with the object and returns a vector of intersections
     // if there is an intersection with the object.
     pub fn intersect(&self, s: &'a Sphere) -> Option<Vec<Intersection<'a, Sphere>>> { 
+        // Tranform the ray to find the it's intersection with the transformed Sphere.
+        let transformed_ray = self.transform(s.transform.inverse());
+        
         // Yields the vector from the sphere's origin to the ray's origin
-        let sphere_to_ray = &self.origin - &s.origin;
+        let sphere_to_ray = &transformed_ray.origin - &s.origin;
         // Dot product of the ray direction on itself
-        let a = &self.direction * &self.direction;
-        let b = 2.0 * (&self.direction * &sphere_to_ray);
+        let a = &transformed_ray.direction * &transformed_ray.direction;
+        let b = 2.0 * (&transformed_ray.direction * &sphere_to_ray);
         let c = (&sphere_to_ray * &sphere_to_ray) - 1.0;
         let discriminant = b.powi(2) - 4.0 * a * c;
 
@@ -265,6 +269,28 @@ mod tests {
         assert!(
             result.origin == expected_origin && result.direction == expected_direction,
             "The ray was not scaled correctly."
+        )
+    }
+
+    #[test]
+    fn intersect_scaled_sphere_with_ray() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let s = Sphere { transform: Matrix::scaling(2.0, 2.0, 2.0), ..Default::default() };
+        let result = r.intersect(&s).unwrap();
+        assert!(
+            result[0].t == 3.0 && result[1].t == 7.0,
+            "The intersection with the scaled sphere was not correct."
+        )
+    }
+
+    #[test]
+    fn intersect_translated_sphere_with_ray() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let s = Sphere { transform: Matrix::translation(5.0, 5.0, 5.0), ..Default::default()};
+        let result = r.intersect(&s);
+        assert!(
+            result.is_none(),
+            "The sphere incorrectly has an intersectin with the ray. No intersection expected."
         )
     }
 }
