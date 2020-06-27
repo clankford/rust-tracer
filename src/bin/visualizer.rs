@@ -1,6 +1,10 @@
 extern crate rust_tracer;
 use crate::rust_tracer::ray_tracer::canvas::*;
 use crate::rust_tracer::ray_tracer::tuple::*;
+use crate::rust_tracer::ray_tracer::ray::*;
+use crate::rust_tracer::ray_tracer::sphere::*;
+use crate::rust_tracer::ray_tracer::traits::object::Object;
+
 
 
 use std::io;
@@ -8,7 +12,54 @@ use std::fs::File;
 use std::io::prelude::*;
 
 fn main() {
+    sphere_shadow_test();
+    projectile_test();
+}
 
+fn sphere_shadow_test() {
+    let ray_origin = Tuple::point(0.0, 0.0, -5.0);
+    let wall_z = 10.0;
+    let wall_size = 7.0;
+    let canvas_pixels = 100;
+    // Size of a single pixel in world space units.
+    let pixel_size = wall_size / canvas_pixels as f32;
+    let half = wall_size / 2.0;
+
+    let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
+    let color = Tuple::color(1.0, 0.0, 0.0);
+    //let shape = Sphere { transform: Matrix::scaling(2.0, 2.0, 2.0), ..Default::default() };
+    let shape = Sphere::new();
+
+    // For each row of pixels in the canvas
+    for y in 0..canvas_pixels - 1 {
+        // Compute the world y coordinate (top = +half, bottom = -half)
+        let world_y = half - pixel_size * y as f32;
+
+        for x in 0..canvas_pixels - 1 {
+            // Compute the world x coordinate (left = -half, right = half)
+            let world_x = -half + pixel_size * x as f32;
+            // Describe the point on the wall that the ray will target
+            let position = Tuple::point(world_x, world_y, wall_z);
+            let r = Ray::new(ray_origin, (&position - &ray_origin).norm());
+            let xs = r.intersect(&shape);
+
+            match xs {
+                None => continue,
+                Some(i) => {
+                    match Ray::hit(&i) {
+                        None => continue,
+                        _ => canvas.write_pixel(x, y, color)
+                    }
+                }
+            }
+        }
+    }
+
+    let ppm = canvas.canvas_to_ppm();
+    create_ppm_file(ppm, "Sphere_Shadow").expect("Failed to write image to file.");
+}
+
+fn projectile_test() {
     let start = Tuple::point(0.0, 1.0, 0.0);
     let velocity = &Tuple::vector(1.0, 1.8, 0.0).norm() * 11.25;
 
@@ -48,7 +99,7 @@ fn main() {
     }
 
     let ppm = canvas.canvas_to_ppm();
-    create_ppm_file(ppm).expect("Failed to write image to file.");
+    create_ppm_file(ppm, "Projectile").expect("Failed to write image to file.");
 }
 
 // Takes a reference to Environment, as envronment is not modified during the tick function, it is
@@ -73,8 +124,9 @@ struct Environment {
     wind: Tuple
 }
 
-fn create_ppm_file(ppm: String) -> io::Result<()> {
-    let mut file = File::create("image.ppm")?;
+fn create_ppm_file(ppm: String, file_name: &str) -> io::Result<()> {
+    let name = format!("images/{}.ppm", file_name);
+    let mut file = File::create(name)?;
     write!(file, "{}", ppm)?;
     Ok(())
 }
