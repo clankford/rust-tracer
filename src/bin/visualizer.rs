@@ -3,7 +3,7 @@ use crate::rust_tracer::ray_tracer::canvas::*;
 use crate::rust_tracer::ray_tracer::tuple::*;
 use crate::rust_tracer::ray_tracer::ray::*;
 use crate::rust_tracer::ray_tracer::sphere::*;
-use crate::rust_tracer::ray_tracer::traits::object::Object;
+use crate::rust_tracer::ray_tracer::matrix::*;
 
 
 
@@ -27,8 +27,9 @@ fn sphere_shadow_test() {
 
     let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
     let color = Tuple::color(1.0, 0.0, 0.0);
-    //let shape = Sphere { transform: Matrix::scaling(2.0, 2.0, 2.0), ..Default::default() };
-    let shape = Sphere::new();
+    let shape = Sphere { transform: &Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * 
+                                    &Matrix::scaling(0.5, 1.0, 1.0), 
+                                    ..Default::default() };
 
     // For each row of pixels in the canvas
     for y in 0..canvas_pixels - 1 {
