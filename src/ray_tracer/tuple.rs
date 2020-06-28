@@ -118,6 +118,16 @@ impl Tuple {
             _ => panic!("Can only take the Hadamard Product of two of the same type of Tuple.")
         }
     }
+
+    // Reflects a vector on a normal vector (calculated from objects)
+    pub fn reflect(&self, normal: Tuple) -> Tuple {
+        match (self.w, normal.w) {
+            (Some(0), Some(0)) => {
+                self - &(&normal * (2.0 * (self * &normal)))
+            }
+            _ => panic!("Can only reflect a vector on another vector.")
+        }
+    }
 }
 
 
@@ -277,6 +287,8 @@ impl Neg for &Tuple {
     }
 }
 
+
+// TODO: Refactor these tests to have better style.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -588,6 +600,30 @@ mod tests {
         assert_eq!(
             true, r,
             "The cross product of the vectors should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn reflect_vector_at_45_degress() {
+        let v = Tuple::vector(1.0, -1.0, 0.0);
+        let n = Tuple::vector(0.0, 1.0, 0.0);
+        let expected = Tuple::vector(1.0, 1.0, 0.0);
+        let output = v.reflect(n);
+        assert!(
+            expected == output,
+            "The reflection of the vector should equal {:#?}, value was {:#?}", expected, output
+        )
+    }
+
+    #[test]
+    fn reflect_vector_off_slanted_surface() {
+        let v = Tuple::vector(0.0, -1.0, 0.0);
+        let n = Tuple::vector(2.0_f32.sqrt() / 2.0, 2.0_f32.sqrt() / 2.0, 0.0);
+        let expected = Tuple::vector(1.0, 0.0, 0.0);
+        let output = v.reflect(n);
+        assert!(
+            expected == output,
+            "The reflection of the vector should equal {:#?}, value was {:#?}", expected, output
         )
     }
 }
