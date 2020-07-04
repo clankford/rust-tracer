@@ -1,6 +1,7 @@
 use crate::ray_tracer::tuple::Tuple;
 use crate::ray_tracer::traits::object::Object;
 use crate::ray_tracer::matrix::Matrix;
+use crate::ray_tracer::material::Material;
 
 #[cfg(test)]
 use crate::ray_tracer::matrix::RotationAxis;
@@ -8,15 +9,13 @@ use crate::ray_tracer::matrix::RotationAxis;
 #[derive(PartialEq)]
 pub struct Sphere {
     pub origin: Tuple,
-    pub transform: Matrix
+    pub transform: Matrix,
+    pub material: Material
 }
 
 impl Object for Sphere {
     fn new() -> Self {
-        Sphere {
-            origin: Tuple::point(0.0, 0.0, 0.0),
-            transform: Matrix::identity()
-        }
+        Default::default()
     }
 
     // Find the normal vector at a given point on the object. This is the perpendicular vector from
@@ -37,7 +36,8 @@ impl Default for Sphere {
     fn default() -> Self {
         Sphere {
             origin: Tuple::point(0.0, 0.0, 0.0),
-            transform: Matrix::identity() 
+            transform: Matrix::identity(),
+            material: Material::default()
         }
     }
 }
@@ -135,6 +135,16 @@ mod tests {
         assert!(
             result == Tuple::vector(0.0, 0.97014, -0.24254),
             "The normal_at function did not compute the right normal vector."
+        )
+    }
+
+    #[test]
+    fn assign_material_to_sphere() {
+        let mut s = Sphere::new();
+        s.material.ambient = 1.0;
+        assert!(
+            s.material.ambient == 1.0,
+            "The value in the material in the sphere was not set correctly"
         )
     }
 }
