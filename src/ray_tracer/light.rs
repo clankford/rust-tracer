@@ -15,7 +15,7 @@ impl Light {
         }
     }
 
-    fn lighting(&self, material: Material, position: Tuple, eyev: Tuple, normalv: Tuple) -> Tuple {
+    pub fn lighting(&self, material: Material, position: Tuple, eyev: Tuple, normalv: Tuple) -> Tuple {
         // Combine the surface color with the light's color/intensity
         let effective_color = material.color.hadamard_product(self.intensity);
         // Find the direction to the light source
