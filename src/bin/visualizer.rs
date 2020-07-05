@@ -3,7 +3,10 @@ use crate::rust_tracer::ray_tracer::canvas::*;
 use crate::rust_tracer::ray_tracer::tuple::*;
 use crate::rust_tracer::ray_tracer::ray::*;
 use crate::rust_tracer::ray_tracer::sphere::*;
+use crate::rust_tracer::ray_tracer::traits::object::*;
 use crate::rust_tracer::ray_tracer::matrix::*;
+use crate::rust_tracer::ray_tracer::material::*;
+use crate::rust_tracer::ray_tracer::light::*;
 
 
 
@@ -26,10 +29,19 @@ fn sphere_shadow_test() {
     let half = wall_size / 2.0;
 
     let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
-    let color = Tuple::color(1.0, 0.0, 0.0);
-    let shape = Sphere { transform: &Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * 
+    //let mut shape = Sphere::new();
+    let mut shape = Sphere { transform: &Matrix::shearing(0.25, 0.0, 0.0, 0.0, 0.0, 0.0) * 
                                     &Matrix::scaling(0.5, 1.0, 1.0), 
                                     ..Default::default() };
+    
+    // Create and apply a material to the shape.
+    shape.material = Material::new();
+    shape.material.color = Tuple::color(1.0, 0.5, 0.75);
+    
+    // Create a light source for the scene
+    let light_position = Tuple::point(10.0, 10.0, -10.0);
+    let light_color = Tuple::color(1.0, 1.0, 1.0);
+    let light = Light::new(light_color, light_position);
 
     // For each row of pixels in the canvas
     for y in 0..canvas_pixels - 1 {
@@ -49,7 +61,13 @@ fn sphere_shadow_test() {
                 Some(i) => {
                     match Ray::hit(&i) {
                         None => continue,
-                        _ => canvas.write_pixel(x, y, color)
+                        Some(j) => {
+                            let point = r.position(j.t);
+                            let normal = shape.normal_at(point);
+                            let eye = -&r.direction;
+                            let color = light.lighting(&shape.material, point, eye, normal);
+                            canvas.write_pixel(x, y, color)
+                        }
                     }
                 }
             }

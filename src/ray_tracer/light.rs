@@ -15,7 +15,7 @@ impl Light {
         }
     }
 
-    pub fn lighting(&self, material: Material, position: Tuple, eyev: Tuple, normalv: Tuple) -> Tuple {
+    pub fn lighting(&self, material: &Material, position: Tuple, eyev: Tuple, normalv: Tuple) -> Tuple {
         // Combine the surface color with the light's color/intensity
         let effective_color = material.color.hadamard_product(self.intensity);
         // Find the direction to the light source
@@ -68,7 +68,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, -10.0));
-        let result = light.lighting(m, position, eyev, normalv);
+        let result = light.lighting(&m, position, eyev, normalv);
         let expected = Tuple::color(1.9, 1.9, 1.9);
         assert!(
             result == expected,
@@ -83,7 +83,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, 2.0_f32.sqrt() / 2.0, -2.0_f32.sqrt() / 2.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, -10.0));
-        let result = light.lighting(m, position, eyev, normalv);
+        let result = light.lighting(&m, position, eyev, normalv);
         let expected = Tuple::color(1.0, 1.0, 1.0);
         assert!(
             result == expected,
@@ -98,7 +98,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 10.0, -10.0));
-        let result = light.lighting(m, position, eyev, normalv);
+        let result = light.lighting(&m, position, eyev, normalv);
         let expected = Tuple::color(0.7364, 0.7364, 0.7364);
         assert!(
             result == expected,
@@ -113,7 +113,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, -2.0_f32.sqrt() / 2.0, -2.0_f32.sqrt() / 2.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 10.0, -10.0));
-        let result = light.lighting(m, position, eyev, normalv);
+        let result = light.lighting(&m, position, eyev, normalv);
         let expected = Tuple::color(1.63638, 1.63638, 1.63638);
         assert!(
             result == expected,
@@ -128,7 +128,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, 10.0));
-        let result = light.lighting(m, position, eyev, normalv);
+        let result = light.lighting(&m, position, eyev, normalv);
         let expected = Tuple::color(0.1, 0.1, 0.1);
         assert!(
             result == expected,
