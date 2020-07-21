@@ -47,6 +47,21 @@ impl Light {
     }
 }
 
+// Must overload PartialEq instead of leveraging Derive PartialEq on the Light struct. This is
+// because we have a custom implementation.
+// TODO: Refactor to use f_equal (otherwise you'd just want to derive partialeq)
+impl PartialEq for Light {
+    fn eq(&self, other: &Light) -> bool {
+        // Assumes that all nested vectors are the same length.
+        if self.position == other.position && self.intensity == other.intensity {
+            true
+        } else {
+            false
+        } 
+    }
+}
+impl Eq for Light {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,6 +148,16 @@ mod tests {
         assert!(
             result == expected,
             "The resultant lighting was not calculated correctly."
+        )
+    }
+
+    #[test]
+    fn lighting_equality() {
+        let l1 = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, 10.0));
+        let l2 = Light::new(Tuple::color(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, 10.0));
+        assert!(
+            l1 == l2,
+            "The light sources were not equal, but were expected to be."
         )
     }
 }

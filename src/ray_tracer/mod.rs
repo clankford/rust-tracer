@@ -7,4 +7,7 @@ pub mod sphere;
 pub mod intersection;
 pub mod light;
 pub mod material;
+pub mod world;
+
 pub mod traits;
+pub mod enums;

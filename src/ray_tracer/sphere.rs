@@ -2,20 +2,41 @@ use crate::ray_tracer::tuple::Tuple;
 use crate::ray_tracer::traits::object::Object;
 use crate::ray_tracer::matrix::Matrix;
 use crate::ray_tracer::material::Material;
+use crate::ray_tracer::enums::object_types::ObjectTypes;
 
 #[cfg(test)]
 use crate::ray_tracer::matrix::RotationAxis;
-
 #[derive(PartialEq)]
 pub struct Sphere {
     pub origin: Tuple,
     pub transform: Matrix,
-    pub material: Material
+    pub material: Material,
+}
+
+impl Sphere {
+    // new() is not part of the Object trait,
+    pub fn new() -> Self {
+        Default::default()
+    }
 }
 
 impl Object for Sphere {
-    fn new() -> Self {
-        Default::default()
+
+    // Access methods for when Sphere gets boxed as part of an object in a world.objects
+    fn get_origin(&self) -> &Tuple {
+        &self.origin
+    }
+
+    fn get_transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
+    }
+
+    fn get_object_type(&self) -> ObjectTypes {
+        ObjectTypes::Sphere
     }
 
     // Find the normal vector at a given point on the object. This is the perpendicular vector from
@@ -144,7 +165,17 @@ mod tests {
         s.material.ambient = 1.0;
         assert!(
             s.material.ambient == 1.0,
-            "The value in the material in the sphere was not set correctly"
+            "The value in the material in the sphere was not set correctly."
+        )
+    }
+
+    #[test]
+    fn sphere_type_is_sphere() {
+        let s = Sphere::new();
+        let t = ObjectTypes::Sphere;
+        assert!(
+            s.get_object_type() == t,
+            "The default object type of sphere was not set correctly."
         )
     }
 }

@@ -3,11 +3,6 @@ use crate::ray_tracer::sphere::Sphere;
 use crate::ray_tracer::intersection::Intersection;
 use crate::ray_tracer::matrix::Matrix;
 
-#[cfg(test)]
-use crate::ray_tracer::traits::object::Object;
-
-
-
 pub struct Ray {
     //TODO: This doesn't feel safe becasue an origin HAS to be a point, not a vector. How can I have more safety here?
     pub origin: Tuple,
