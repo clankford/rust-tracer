@@ -1,4 +1,5 @@
 use crate::ray_tracer::traits::object::Object;
+use crate::ray_tracer::traits::intersection_object::IntersectionObject;
 
 #[cfg(test)]
 use crate::ray_tracer::sphere::Sphere;
@@ -15,12 +16,15 @@ impl<'a> Intersection<'a> {
             object
         }
     }
+}
+
+impl IntersectionObject for Intersection<'_> {
 
     fn get_t(&self) -> f32 {
         self.t
     }
     
-    fn get_object(&self) -> &Box<dyn Object + 'a> {
+    fn get_object(&self) -> &Box<dyn Object + '_> {
         &self.object
     }
 }
