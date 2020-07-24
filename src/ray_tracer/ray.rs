@@ -3,6 +3,9 @@ use crate::ray_tracer::sphere::Sphere;
 use crate::ray_tracer::intersection::Intersection;
 use crate::ray_tracer::matrix::Matrix;
 
+#[cfg(test)]
+use crate::ray_tracer::traits::object::Object;
+
 pub struct Ray {
     //TODO: This doesn't feel safe becasue an origin HAS to be a point, not a vector. How can I have more safety here?
     pub origin: Tuple,
@@ -32,12 +35,12 @@ impl Ray {
     }
 }
 
-impl <'a,'b> Ray {
+impl <'a> Ray {
 
     // Returns an Option so that None can be returned if the ray does not intersect with the sphere
     // Returns None if the ray does not intersect with the object and returns a vector of intersections
     // if there is an intersection with the object.
-    pub fn intersect(&self, s: &'a Sphere) -> Option<Vec<Intersection<'a, Sphere>>> { 
+    pub fn intersect(&self, s: &'a Sphere) -> Option<Vec<Intersection<'a>>> { 
         // Tranform the ray to find the it's intersection with the transformed Sphere.
         let transformed_ray = self.transform(s.transform.inverse());
         
@@ -57,12 +60,12 @@ impl <'a,'b> Ray {
         else {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-            Some(vec![Intersection::new(t1, s), Intersection::new(t2, s)])
+            Some(vec![Intersection::new(t1, Box::new(s)), Intersection::new(t2, Box::new(s))])
         }
     }
 
     // Returns the closest positive intersection to the Ray's origin.
-    pub fn hit(is: &'b Vec<Intersection<'a, Sphere>>) -> Option<&'b Intersection<'a, Sphere>> {
+    pub fn hit(is: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
         let mut closest = &is[0];
         for i in 1..is.len() {
             if closest.t < 0.0 && is[i].t >= 0.0 {
@@ -118,7 +121,7 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let result = r.intersect(&s).unwrap();
-        let expected = vec![Intersection::new(4.0, &s), Intersection::new(6.0, &s)];
+        let expected = vec![Intersection::new(4.0, Box::new(&s)), Intersection::new(6.0, Box::new(&s))];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
             "The t values of the intersection were not calculated correctly!"
@@ -130,7 +133,7 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 1.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let result = r.intersect(&s).unwrap();
-        let expected = vec![Intersection::new(5.0, &s), Intersection::new(5.0, &s)];
+        let expected = vec![Intersection::new(5.0, Box::new(&s)), Intersection::new(5.0, Box::new(&s))];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
             "The t values of the intersection were not calculated correctly!"
@@ -153,7 +156,7 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let result = r.intersect(&s).unwrap();
-        let expected = vec![Intersection::new(-1.0, &s), Intersection::new(1.0, &s)];
+        let expected = vec![Intersection::new(-1.0, Box::new(&s)), Intersection::new(1.0, Box::new(&s))];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
             "The t values of the intersection were not calculated correctly!"
@@ -165,7 +168,7 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         let result = r.intersect(&s).unwrap();
-        let expected = vec![Intersection::new(-6.0, &s), Intersection::new(-4.0, &s)];
+        let expected = vec![Intersection::new(-6.0, Box::new(&s)), Intersection::new(-4.0, Box::new(&s))];
         assert!(
             (result[0].t == expected[0].t) && (result[1].t == expected[1].t),
             "The t values of the intersection were not calculated correctly!"
@@ -179,7 +182,10 @@ mod tests {
         let result = r.intersect(&s).unwrap();
         let expected = &s;
         assert!(
-            result[0].object == expected,
+            result[0].object.get_material() == expected.get_material() &&
+            result[0].object.get_object_type() == expected.get_object_type() &&
+            result[0].object.get_transform() == expected.get_transform() &&
+            result[0].object.get_origin() == expected.get_origin(),
             "The object was not set correctly in the intersect function."
         )
     }
@@ -187,11 +193,11 @@ mod tests {
     #[test]
     fn find_hit_all_positive() {
         let s = Sphere::new();
-        let i1 = Intersection::new(1.0, &s);
-        let i2 = Intersection::new(2.0, &s);
+        let i1 = Intersection::new(1.0, Box::new(&s));
+        let i2 = Intersection::new(2.0, Box::new(&s));
         let is = vec![i1, i2];
         let result = Ray::hit(&is).unwrap();
-        let expected = Intersection::new(1.0, &s);
+        let expected = Intersection::new(1.0, Box::new(&s));
         assert!(
             result.t == expected.t,
             "The expected intersection was not returned."
@@ -201,11 +207,11 @@ mod tests {
     #[test]
     fn find_hit_one_negative_one_positive() {
         let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, &s);
-        let i2 = Intersection::new(1.0, &s);
+        let i1 = Intersection::new(-1.0, Box::new(&s));
+        let i2 = Intersection::new(1.0, Box::new(&s));
         let is = vec![i1, i2];
         let result = Ray::hit(&is).unwrap();
-        let expected = Intersection::new(1.0, &s);
+        let expected = Intersection::new(1.0, Box::new(&s));
         assert!(
             result.t == expected.t,
             "The expected intersection was not returned."
@@ -215,8 +221,8 @@ mod tests {
     #[test]
     fn find_hit_all_negative() {
         let s = Sphere::new();
-        let i1 = Intersection::new(-2.0, &s);
-        let i2 = Intersection::new(-1.0, &s);
+        let i1 = Intersection::new(-2.0, Box::new(&s));
+        let i2 = Intersection::new(-1.0, Box::new(&s));
         let is = vec![i1, i2];
         let result = Ray::hit(&is);
         assert!(
@@ -228,13 +234,13 @@ mod tests {
     #[test]
     fn find_hit_many_intersections() {
         let s = Sphere::new();
-        let i1 = Intersection::new(5.0, &s);
-        let i2 = Intersection::new(7.0, &s);
-        let i3 = Intersection::new(-3.0, &s);
-        let i4 = Intersection::new(2.0, &s);
+        let i1 = Intersection::new(5.0, Box::new(&s));
+        let i2 = Intersection::new(7.0, Box::new(&s));
+        let i3 = Intersection::new(-3.0, Box::new(&s));
+        let i4 = Intersection::new(2.0, Box::new(&s));
         let is = vec![i1, i2, i3, i4];
         let result = Ray::hit(&is).unwrap();
-        let expected = Intersection::new(2.0, &s);
+        let expected = Intersection::new(2.0, Box::new(&s));
         assert!(
             result.t == expected.t,
             "The expected intersection was not returned."

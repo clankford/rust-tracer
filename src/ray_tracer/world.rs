@@ -4,6 +4,8 @@ use crate::ray_tracer::sphere::Sphere;
 use crate::ray_tracer::material::Material;
 use crate::ray_tracer::matrix::Matrix;
 use crate::ray_tracer::traits::object::Object;
+use crate::ray_tracer::ray::Ray;
+use crate::ray_tracer::traits::intersection_object::IntersectionObject;
 
 pub struct World {
     light: Light,
@@ -13,6 +15,10 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn intersect(ray: Ray) -> Option<Vec<Box<dyn IntersectionObject>>> {
+        None
     }
 }
 

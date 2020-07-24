@@ -6,6 +6,7 @@ use crate::ray_tracer::enums::object_types::ObjectTypes;
 
 #[cfg(test)]
 use crate::ray_tracer::matrix::RotationAxis;
+
 #[derive(PartialEq)]
 pub struct Sphere {
     pub origin: Tuple,
@@ -17,6 +18,38 @@ impl Sphere {
     // new() is not part of the Object trait,
     pub fn new() -> Self {
         Default::default()
+    }
+}
+
+impl <'a> Object for &'a Sphere {
+
+    // Access methods for when Sphere gets boxed as part of an object in a world.objects
+    fn get_origin(&self) -> &Tuple {
+        &self.origin
+    }
+
+    fn get_transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
+    }
+
+    fn get_object_type(&self) -> ObjectTypes {
+        ObjectTypes::Sphere
+    }
+
+    // Find the normal vector at a given point on the object. This is the perpendicular vector from
+    // that point on the surface.
+    fn normal_at(&self, world_point: Tuple) -> Tuple {
+        let transform_inverse = self.transform.inverse();
+        let object_point = &transform_inverse * &world_point;
+        let object_normal = &object_point - &Tuple::point(0.0, 0.0, 0.0);
+        let mut world_normal = &transform_inverse.transpose() * &object_normal;
+        world_normal.w = Some(0);
+        
+        world_normal.norm()
     }
 }
 
